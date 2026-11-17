@@ -113,6 +113,16 @@ label{display:block;font-size:13px;color:var(--tx2);margin:10px 0}
 label input,label select,label textarea{margin-top:4px}
 label.chk{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--tx);margin:0;padding:9px 0;border-top:1px solid var(--bd);cursor:pointer}
 label.chk input{width:20px;height:20px;margin:0;accent-color:var(--ac)}
+.nz{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--bd)}
+.nz>label.chk{border:none;padding:10px 0 0}
+.nz.over{box-shadow:inset 3px 0 var(--bad);padding-left:10px}
+.nz.today{box-shadow:inset 3px 0 var(--warn);padding-left:10px}
+.nz.done textarea{text-decoration:line-through;color:var(--tx2)}
+.nzb{flex:1;min-width:0}
+.nzm{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:13px;color:var(--tx2)}
+.nzm label{display:flex;align-items:center;gap:6px;margin:0}
+.nzm input[type=date]{width:auto;margin:0;padding:4px 8px}
+textarea.zg{min-height:140px}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{padding:5px 12px;font-size:15px;font-weight:600;border-radius:999px}
@@ -329,14 +339,14 @@ function seed(){
  const K=[{id:'k1',name:'7a',fach:'Englisch'},{id:'k2',name:'8c',fach:'Englisch'},{id:'k3',name:'9b',fach:'Geschichte'}];
  const sch=[];
  K.forEach((k,ki)=>{for(let i=0;i<8;i++){
-  const s={id:uid(),klasse:k.id,vn:VN[(i+ki*3)%12],nn:NN[(i*5+ki*2)%12],tel:'0170 '+(1000000+Math.floor(rnd()*8999999)),adr:'Musterweg '+(1+i)+', 12345 Musterstadt',eltern:'',ziel:'',stand:'',vereinb:[],noten:[],krank:[],unent:[]};
+  const s={id:uid(),klasse:k.id,vn:VN[(i+ki*3)%12],nn:NN[(i*5+ki*2)%12],tel:'0170 '+(1000000+Math.floor(rnd()*8999999)),adr:'Musterweg '+(1+i)+', 12345 Musterstadt',eltern:'',ziel:'',stand:'',vereinb:[],noten:[],krank:[],unent:[],notizen:[],zeugnis:''};
   const ns=2+Math.floor(rnd()*3),nm=2+Math.floor(rnd()*4);
   for(let j=0;j<ns;j++)s.noten.push({id:uid(),typ:'s',kat:j%2?'Test':'Klassenarbeit',w:NOTEN[2+Math.floor(rnd()*10)][1],d:daysAgo(10+j*14),n:''});
   for(let j=0;j<nm;j++)s.noten.push({id:uid(),typ:'m',kat:j%2?'Vortrag':'Mitarbeit',w:NOTEN[2+Math.floor(rnd()*9)][1],d:daysAgo(3+j*9),n:''});
   sch.push(s)}});
  const s0=sch.find(s=>s.klasse==='k2');
  s0.ziel='Freier sprechen, weniger Angst vor Fehlern';s0.stand='Unit 3, Hörtexte mit Aufgaben';
- s0.vereinb.push({d:daysAgo(14),mit:'s',t:'Hörverstehen gezielt schulen'});
+ s0.vereinb.push({d:daysAgo(14),mit:'s',t:'Hörverstehen gezielt schulen'});s0.notizen.push({id:uid(),d:daysAgo(2),f:daysAgo(-2),t:'Elterngespräch vorbereiten',done:false});
  sch.filter(s=>s.klasse==='k1')[2].krank.push(iso(new Date()));
  const sitz={};K.forEach(k=>{sitz[k.id]=autoLayout(sch.filter(s=>s.klasse===k.id).map(s=>s.id))});
  return{klassen:K,schueler:sch,
@@ -404,7 +414,7 @@ function normalize(d){
  d.klassen=d.klassen||[];d.schueler=d.schueler||[];d.auftraege=d.auftraege||[];d.plan=d.plan||{};d.planung=d.planung||{};d.sitz=d.sitz||{};
  if(!d.zeiten||!d.zeiten.length)d.zeiten=[['07:55','08:40'],['08:45','09:30'],['09:50','10:35'],['10:40','11:25'],['11:45','12:30'],['12:35','13:20'],['13:30','14:15'],['14:20','15:05']];
  d.set=Object.assign({gew:50,katS:['Klassenarbeit','Test','Vokabeltest'],katM:['Mitarbeit','Vortrag','Referat','Hausaufgabe'],faecher:['Englisch','Geschichte','Deutsch','Mathematik'],letzterExport:null},d.set||{});
- d.schueler.forEach(s=>{s.noten=s.noten||[];s.krank=s.krank||[];s.unent=s.unent||[];s.vereinb=s.vereinb||[];s.vereinb.forEach(v=>{if(!v.mit)v.mit='s'});['vn','nn','tel','adr','eltern','ziel','stand'].forEach(k=>{if(s[k]==null)s[k]=''})});
+ d.schueler.forEach(s=>{s.noten=s.noten||[];s.krank=s.krank||[];s.unent=s.unent||[];s.vereinb=s.vereinb||[];s.notizen=s.notizen||[];s.vereinb.forEach(v=>{if(!v.mit)v.mit='s'});['vn','nn','tel','adr','eltern','ziel','stand','zeugnis'].forEach(k=>{if(s[k]==null)s[k]=''})});
  d.auftraege.forEach(a=>{a.klassen=a.klassen||[];a.schueler=a.schueler||[];a.done=a.done||{}});
  d.klassen.forEach(k=>{if(!d.sitz[k.id])d.sitz[k.id]=[]});
  return d;
@@ -472,7 +482,8 @@ function vHeute(){
   return `<div class="les ${cur?'cur':''}"><div><b>${l.i+1}. Std</b><div class="t">${l.z[0]}–${l.z[1]}</div></div><div><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(l.k.name)} · ${esc(l.k.fach)}</b>${cur?'<span class="tag ac">jetzt</span>':''}</div>
   <textarea class="grow" rows="1" placeholder="Was ist geplant?" oninput="S.planung['${key}']=this.value;save()">${esc(S.planung[key]||'')}</textarea>
   <div style="margin-top:6px"><button class="pri" onclick="go({tab:'klassen',klasse:'${l.k.id}',ktab:'sitz',schueler:null})">Sitzplan und mündliche Noten</button> <button onclick="go({tab:'klassen',klasse:'${l.k.id}',ktab:'schueler',schueler:null})">Schülerliste</button></div></div></div>`}).join(''):'<div class="sub">'+(info.feiertag||info.ferien?'Heute kein Unterricht: '+esc(info.feiertag||info.ferien)+'.':'Heute kein Unterricht im Stundenplan.')+'</div>';
- h+=`</div><div class="stack"><div class="card"><h2>Krank heute</h2>`+(kr.length?kr.map(s=>`<div class="row click" onclick="go({tab:'klassen',klasse:'${s.klasse}',schueler:'${s.id}'})"><span>${esc(nameOf(s))}</span><span class="tag">${esc(kl(s.klasse).name)}</span></div>`).join(''):'<div class="sub">Niemand krank gemeldet.</div>')+`</div>
+ const nz=[];S.schueler.forEach(s=>s.notizen.forEach(n=>{if(!n.done&&n.f&&dueDays(n.f)<=7)nz.push({s:s,n:n})}));nz.sort((a,b)=>a.n.f.localeCompare(b.n.f));
+ h+=`</div><div class="stack">`+(nz.length?`<div class="card"><h2>Fällige Notizen</h2>`+nz.map(o=>`<div class="row click" onclick="go({tab:'klassen',klasse:'${o.s.klasse}',schueler:'${o.s.id}'})"><span><b>${esc(nameOf(o.s))}</b> <span class="sub">${esc(o.n.t.slice(0,60))}</span></span>${dueTag(o.n)}</div>`).join('')+`</div>`:'')+`<div class="card"><h2>Krank heute</h2>`+(kr.length?kr.map(s=>`<div class="row click" onclick="go({tab:'klassen',klasse:'${s.klasse}',schueler:'${s.id}'})"><span>${esc(nameOf(s))}</span><span class="tag">${esc(kl(s.klasse).name)}</span></div>`).join(''):'<div class="sub">Niemand krank gemeldet.</div>')+`</div>
  <div class="card"><h2>Offene Aufträge</h2>`+(offen.length?offen.map(o=>`<div class="row click" onclick="go({tab:'auftraege',auftrag:'${o.a.id}'})"><span>${esc(o.a.titel)}</span><span class="tag warn">${o.n} von ${o.all} offen</span></div>`).join(''):'<div class="sub">Alles erledigt.</div>')+`</div><div class="card"><h2>Nächste Ferien und Feiertage</h2>${naechsteHtml()}</div></div></div>`;
  return h;
 }
@@ -513,7 +524,7 @@ function gSearch(){
  S.auftraege.forEach(a=>{const ks=a.klassen.map(i=>kl(i)?kl(i).name:'').filter(Boolean).join(', ');if(gHit(a.titel+' '+ks,tk))add('Aufträge',a.titel,(ks?ks+' · ':'')+(a.faellig?'bis '+dshort(a.faellig):''),()=>go({tab:'auftraege',auftrag:a.id}))});
  [y0,y0+1,y0+2,y0-1].forEach(y=>{const m=feiertage(y);Object.keys(m).forEach(d=>{if(gHit(m[d]+' '+dlong(d),tk))add('Feiertage und Ferien',m[d],dlong(d),()=>go({tab:'kalender',year:y}),'fe')})});
  const t0=iso(new Date());FERIEN.slice().sort((a,b)=>((a[1]<t0)-(b[1]<t0))||a[0].localeCompare(b[0])).forEach(f=>{if(gHit(f[2]+' '+dlong(f[0])+' '+dlong(f[1]),tk))add('Feiertage und Ferien',f[2],f[0]===f[1]?dlong(f[0]):dshort(f[0])+' – '+dlong(f[1]),()=>go({tab:'kalender',year:+f[0].slice(0,4)}),'fr')});
- S.schueler.forEach(s=>{[['Lernziel',s.ziel],['Stand',s.stand]].concat(s.vereinb.map(v=>['Vereinbarung mit '+(v.mit==='e'?'Eltern':'Schüler'),v.t])).forEach(x=>{if(x[1]&&gHit(x[1],tk))add('Notizen',nameOf(s)+' · '+x[0],x[1].slice(0,70),()=>go({tab:'klassen',klasse:s.klasse,schueler:s.id}))})});
+ S.schueler.forEach(s=>{[['Lernziel',s.ziel],['Stand',s.stand],['Zeugnis',s.zeugnis]].concat(s.notizen.map(n=>['Notiz',n.t]),s.vereinb.map(v=>['Vereinbarung mit '+(v.mit==='e'?'Eltern':'Schüler'),v.t])).forEach(x=>{if(x[1]&&gHit(x[1],tk))add('Notizen',nameOf(s)+' · '+x[0],x[1].slice(0,70),()=>go({tab:'klassen',klasse:s.klasse,schueler:s.id}))})});
  Object.keys(S.planung).forEach(key=>{const t=S.planung[key];if(!t||!gHit(t,tk))return;const p=key.split('|');add('Notizen','Planung '+dshort(p[0])+' · '+(+p[1]+1)+'. Std',t.slice(0,70),()=>go({tab:'woche',week:weekOff(p[0])}))});
  const cnt={},out=items.filter(i=>(cnt[i.g]=(cnt[i.g]||0)+1)<=(i.g==='SchülerInnen'?8:6));
  G.items=out;G.sel=0;
@@ -633,7 +644,7 @@ function schuelerSave(kid,id){
   const s=sc(id);Object.assign(s,{vn:vn,nn:nn,tel:$('#m_tel').value,adr:$('#m_adr').value,eltern:$('#m_el').value});
   const to=$('#m_k').value;
   if(to!==s.klasse){S.sitz[s.klasse]=(S.sitz[s.klasse]||[]).filter(d=>d.sid!==id);s.klasse=to;addDeskFor(to,id);if(V.schueler===id)V.klasse=to}
- }else S.schueler.push({id:uid(),klasse:kid,vn:vn,nn:nn,tel:$('#m_tel').value,adr:$('#m_adr').value,eltern:$('#m_el').value,ziel:'',stand:'',vereinb:[],noten:[],krank:[],unent:[]});
+ }else S.schueler.push({id:uid(),klasse:kid,vn:vn,nn:nn,tel:$('#m_tel').value,adr:$('#m_adr').value,eltern:$('#m_el').value,ziel:'',stand:'',vereinb:[],noten:[],krank:[],unent:[],notizen:[],zeugnis:''});
  save();closeModal();render();
 }
 
@@ -642,15 +653,17 @@ function vSchueler(s){
  const t=iso(new Date()),st=stats(s),kr=s.krank.includes(t),k=kl(s.klasse);
  const chips=typ=>{const l=s.noten.filter(n=>n.typ===typ).sort((a,b)=>b.d.localeCompare(a.d));return l.length?l.map(n=>`<button class="chip" onclick="noteModal('${s.id}','${n.id}')">${fmt(n.w)}<small>${esc(n.kat)} · ${dshort(n.d)}</small></button>`).join(''):'<span class="sub">Noch keine Note.</span>'};
  const aufs=auftraegeFor(s);
- return `<div class="ph"><div class="head"><div class="avwrap" onclick="fotoModal('${s.id}')" title="Foto ändern">${avHtml(s,'lg')}<span class="avedit">${FOTO[s.id]?'ändern':'+ Foto'}</span></div><div><button class="crumb" onclick="${V.back==='alle'?"go({tab:'schueler',klasse:null,schueler:null})":"go({schueler:null})"}">‹ ${V.back==='alle'?'SchülerInnen':esc(k.name)+' '+esc(k.fach)}</button><h1>${esc(nameOf(s))}</h1><div class="sub">${kr?'<span class="tag bad">heute krank</span> ':''}<button class="crumb" onclick="krankModal('${s.id}')">Fehltage insgesamt: ${s.krank.length}${s.unent.length?' (davon '+s.unent.length+' unentschuldigt)':''} · Verlauf ansehen</button></div></div></div>
+ return `<div class="ph"><div class="head"><div class="avwrap" onclick="fotoModal('${s.id}')" title="Foto ändern">${avHtml(s,'lg')}<span class="avedit">${FOTO[s.id]?'ändern':'+ Foto'}</span></div><div><button class="crumb" onclick="${V.back==='alle'?"go({tab:'schueler',klasse:null,schueler:null})":"go({schueler:null})"}">‹ ${V.back==='alle'?'SchülerInnen':esc(k.name)+' '+esc(k.fach)}</button><h1>${esc(nameOf(s))}</h1><div class="sub">${kr?'<span class="tag bad">heute krank</span> ':''}${faellig(s).length?`<span class="tag warn">${faellig(s).length} ${faellig(s).length===1?'Notiz':'Notizen'} fällig</span> `:''}<button class="crumb" onclick="krankModal('${s.id}')">Fehltage insgesamt: ${s.krank.length}${s.unent.length?' (davon '+s.unent.length+' unentschuldigt)':''} · Verlauf ansehen</button></div></div></div>
  <div class="acts"><button onclick="schuelerModal('${s.klasse}','${s.id}')">Bearbeiten</button><button onclick="krank('${s.id}',${!kr})">${kr?'Krankmeldung aufheben':'Heute krank melden'}</button><button onclick="transferModal('${s.klasse}','${s.id}')">In andere Klasse oder anderes Fach kopieren</button><button class="dng" onclick="delSchueler('${s.id}')">Löschen</button></div></div>
  <div class="kpis"><div class="kpi"><b>${num(st.a)}</b><span>schriftlich Ø</span></div><div class="kpi"><b>${num(st.b)}</b><span>mündlich Ø</span></div><div class="kpi"><b>${zn(st.g)}</b><span>Zeugnisnote (${num(st.g)}, ${S.set.gew}/${100-S.set.gew})</span></div><div class="kpi click" onclick="krankModal('${s.id}')"><b>${s.krank.length-s.unent.length}</b><span>Fehltage entschuldigt</span></div><div class="kpi click" onclick="krankModal('${s.id}')"><b${s.unent.length?' style="color:var(--bad)"':''}>${s.unent.length}</b><span>Fehltage unentschuldigt</span></div></div>
+ <div class="card" style="margin-bottom:18px"><div class="row" style="flex-wrap:wrap;gap:10px;border:none;padding:0"><h2 style="margin:0">Zeugnis</h2><span class="sub" id="zg_i">${zgInfo(s)}</span></div><textarea class="grow zg" style="margin-top:12px" placeholder="Zeugnistext fortlaufend schreiben" oninput="zgUpd('${s.id}',this.value)">${esc(s.zeugnis)}</textarea></div>
  <div class="card" style="margin-bottom:18px"><div class="row" style="flex-wrap:wrap;gap:10px"><h2 style="margin:0">Noten</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="seg" style="margin:0"><button class="${V.ntab!=='uebersicht'?'on':''}" onclick="nTab('liste')">Liste</button><button class="${V.ntab==='uebersicht'?'on':''}" onclick="nTab('uebersicht')">Übersicht</button></div><button class="pri" onclick="noteModal('${s.id}')">+ Note eintragen</button></div></div>
  ${V.ntab==='uebersicht'?`<h3>Schriftlich</h3><div class="chips">${chips('s')}</div><h3>Mündlich</h3><div class="chips">${chips('m')}</div>`:notenListe(s)}</div>
  <div class="g2e"><div class="stack">
  <div class="card"><h2>Stammdaten</h2><div class="two"><label>Vorname<input value="${esc(s.vn)}" oninput="upd('${s.id}','vn',this.value)"></label><label>Nachname<input value="${esc(s.nn)}" oninput="upd('${s.id}','nn',this.value)"></label></div>
  <label>Telefon<input value="${esc(s.tel)}" oninput="upd('${s.id}','tel',this.value)"></label><label>Adresse<textarea class="grow" rows="1" oninput="upd('${s.id}','adr',this.value)">${esc(s.adr)}</textarea></label><label>Eltern, Kontakt<textarea class="grow" rows="1" oninput="upd('${s.id}','eltern',this.value)">${esc(s.eltern)}</textarea></label></div>
  </div><div class="stack">
+ <div class="card"><h2>Notizen und ToDos</h2>${notizenHtml(s)}</div>
  <div class="card"><h2>Lernziele dieses Schuljahr</h2><textarea class="grow" placeholder="Ziele aus der Reflexion" oninput="upd('${s.id}','ziel',this.value)">${esc(s.ziel)}</textarea></div>
  <div class="card"><h2>Vereinbarungen</h2>${s.vereinb.map((v,i)=>`<div class="row"><span class="sub" style="white-space:nowrap">${dshort(v.d)}</span>${mitSel(`onchange="sc('${s.id}').vereinb[${i}].mit=this.value;save()"`,v.mit)}<textarea class="grow" rows="1" oninput="sc('${s.id}').vereinb[${i}].t=this.value;save()">${esc(v.t)}</textarea><button class="ghost dng" onclick="delVer('${s.id}',${i})" title="Löschen">×</button></div>`).join('')}
  <div style="display:flex;gap:8px;margin-top:10px">${mitSel('id="v_m"')}<textarea class="grow" rows="1" id="v_t" placeholder="z. B. Hörverstehen schulen"></textarea><button onclick="addVer('${s.id}')">Hinzufügen</button></div></div>
@@ -659,6 +672,28 @@ function vSchueler(s){
  <button class="btn" onclick="auftragModal(null,'${s.id}')">+ Auftrag nur für ${esc(s.vn)}</button></div>
  </div></div>`;
 }
+function zgInfo(s){const w=(s.zeugnis.match(/\S+/g)||[]).length;return w?w+' Wörter'+(s.zeugnisD?' · zuletzt bearbeitet am '+dlong(s.zeugnisD):''):'Noch kein Text'}
+function zgUpd(id,v){const s=sc(id);s.zeugnis=v;s.zeugnisD=iso(new Date());save();const e=$('#zg_i');if(e)e.textContent=zgInfo(s)}
+/* Notizen: ToDos mit Fälligkeit */
+const dueDays=f=>Math.round((new Date(f+'T00:00:00')-new Date(iso(new Date())+'T00:00:00'))/864e5);
+const faellig=s=>s.notizen.filter(n=>!n.done&&n.f&&dueDays(n.f)<=0);
+function dueTag(n){
+ if(n.done)return '<span class="tag ok">erledigt</span>';
+ if(!n.f)return '';
+ const x=dueDays(n.f);
+ return x<0?`<span class="tag bad">überfällig seit ${-x} ${x===-1?'Tag':'Tagen'}</span>`:x===0?'<span class="tag warn">heute fällig</span>':x<=7?`<span class="tag ac">in ${x} ${x===1?'Tag':'Tagen'}</span>`:'';
+}
+function notizenHtml(s){
+ const key=n=>n.done?'1'+String(9e15-new Date(n.d)):'0'+(n.f||'9999');
+ const l=s.notizen.slice().sort((a,b)=>key(a).localeCompare(key(b)));
+ return (l.length?l.map(n=>{const x=!n.done&&n.f?dueDays(n.f):1;
+  return `<div class="nz ${n.done?'done':x<0?'over':x===0?'today':''}"><label class="chk"><input type="checkbox" ${n.done?'checked':''} onchange="notizSet('${s.id}','${n.id}','done',this.checked,1)" title="erledigt"></label><div class="nzb"><textarea class="grow" rows="1" oninput="notizSet('${s.id}','${n.id}','t',this.value)">${esc(n.t)}</textarea>
+  <div class="nzm"><span>notiert ${dlong(n.d)}</span><label>fällig<input type="date" value="${n.f||''}" onchange="notizSet('${s.id}','${n.id}','f',this.value,1)"></label>${dueTag(n)}<button class="ghost dng" onclick="notizDel('${s.id}','${n.id}')" title="Löschen">×</button></div></div></div>`}).join(''):'<div class="sub">Noch keine Notizen.</div>')
+ +`<div style="margin-top:10px"><textarea class="grow" rows="1" id="nz_t" placeholder="Neue Notiz oder ToDo"></textarea><div class="nzm"><label>fällig<input type="date" id="nz_f"></label><button onclick="addNotiz('${s.id}')">Hinzufügen</button></div></div>`;
+}
+function addNotiz(id){const t=$('#nz_t').value.trim();if(!t)return;sc(id).notizen.push({id:uid(),d:iso(new Date()),f:$('#nz_f').value,t:t,done:false});save();render()}
+function notizSet(sid,nid,k,v,re){sc(sid).notizen.find(n=>n.id===nid)[k]=v;save();if(re)render()}
+function notizDel(sid,nid){const s=sc(sid);s.notizen=s.notizen.filter(n=>n.id!==nid);save();render()}
 function notenListe(s){
  const l=s.noten.slice().sort((a,b)=>b.d.localeCompare(a.d));
  if(!l.length)return '<div class="sub" style="margin-top:12px">Noch keine Note.</div>';
