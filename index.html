@@ -915,7 +915,12 @@ function pwaStatus(){
 (function pwaInit(){
  try{if(!S.set.start){S.set.start=iso(new Date());save()}}catch(e){}
  try{if(navigator.storage&&navigator.storage.persist){navigator.storage.persisted().then(v=>{PERSIST=v;if(!v)return navigator.storage.persist().then(x=>{PERSIST=x})}).then(()=>{const e=$('#pwst');if(e)e.innerHTML=pwaStatus()}).catch(()=>{})}}catch(e){}
- try{if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}catch(e){}
+ /* Offline-Cache; nach einem Update lädt die App sich einmal selbst neu */
+try{if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol)){
+ const had=!!navigator.serviceWorker.controller;let re=false;
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!re){re=true;location.reload()}});
+ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(r=>document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')r.update().catch(()=>{})})).catch(()=>{}));
+}}catch(e){}
 })();
 initTop();render();fotoLoad();abLoad();
 </script>
