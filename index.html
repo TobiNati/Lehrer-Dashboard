@@ -642,7 +642,7 @@ function vSchueler(s){
  const t=iso(new Date()),st=stats(s),kr=s.krank.includes(t),k=kl(s.klasse);
  const chips=typ=>{const l=s.noten.filter(n=>n.typ===typ).sort((a,b)=>b.d.localeCompare(a.d));return l.length?l.map(n=>`<button class="chip" onclick="noteModal('${s.id}','${n.id}')">${fmt(n.w)}<small>${esc(n.kat)} · ${dshort(n.d)}</small></button>`).join(''):'<span class="sub">Noch keine Note.</span>'};
  const aufs=auftraegeFor(s);
- return `<div class="ph"><div class="head"><div class="avwrap" onclick="fotoModal('${s.id}')" title="Foto ändern">${avHtml(s,'lg')}<span class="avedit">${FOTO[s.id]?'ändern':'+ Foto'}</span></div><div><button class="crumb" onclick="${V.back==='alle'?"go({tab:'schueler',klasse:null,schueler:null})":"go({schueler:null})"}">‹ ${V.back==='alle'?'SchülerInnen':esc(k.name)+' '+esc(k.fach)}</button><h1>${esc(nameOf(s))}</h1><div class="sub">${kr?'<span class="tag bad">heute krank</span> ':''}Fehltage insgesamt: ${s.krank.length}</div></div></div>
+ return `<div class="ph"><div class="head"><div class="avwrap" onclick="fotoModal('${s.id}')" title="Foto ändern">${avHtml(s,'lg')}<span class="avedit">${FOTO[s.id]?'ändern':'+ Foto'}</span></div><div><button class="crumb" onclick="${V.back==='alle'?"go({tab:'schueler',klasse:null,schueler:null})":"go({schueler:null})"}">‹ ${V.back==='alle'?'SchülerInnen':esc(k.name)+' '+esc(k.fach)}</button><h1>${esc(nameOf(s))}</h1><div class="sub">${kr?'<span class="tag bad">heute krank</span> ':''}<button class="crumb" onclick="krankModal('${s.id}')">Fehltage insgesamt: ${s.krank.length} · Verlauf ansehen</button></div></div></div>
  <div class="acts"><button onclick="schuelerModal('${s.klasse}','${s.id}')">Bearbeiten</button><button onclick="krank('${s.id}',${!kr})">${kr?'Krankmeldung aufheben':'Heute krank melden'}</button><button onclick="transferModal('${s.klasse}','${s.id}')">In andere Klasse oder anderes Fach kopieren</button><button class="dng" onclick="delSchueler('${s.id}')">Löschen</button></div></div>
  <div class="kpis"><div class="kpi"><b>${num(st.a)}</b><span>schriftlich Ø</span></div><div class="kpi"><b>${num(st.b)}</b><span>mündlich Ø</span></div><div class="kpi"><b>${zn(st.g)}</b><span>Zeugnisnote (${num(st.g)}, ${S.set.gew}/${100-S.set.gew})</span></div></div>
  <div class="card" style="margin-bottom:18px"><div class="row" style="flex-wrap:wrap;gap:10px"><h2 style="margin:0">Noten</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="seg" style="margin:0"><button class="${V.ntab!=='uebersicht'?'on':''}" onclick="nTab('liste')">Liste</button><button class="${V.ntab==='uebersicht'?'on':''}" onclick="nTab('uebersicht')">Übersicht</button></div><button class="pri" onclick="noteModal('${s.id}')">+ Note eintragen</button></div></div>
@@ -667,6 +667,18 @@ function notenListe(s){
 function nTab(v){V.ntab=v;render()}
 function upd(id,f,v){sc(id)[f]=v;save()}
 function krank(id,v){const s=sc(id),t=iso(new Date());s.krank=s.krank.filter(x=>x!==t);if(v)s.krank.push(t);save();render()}
+function krankModal(id){
+ const s=sc(id),l=s.krank.slice().sort((a,b)=>b.localeCompare(a)),WT=['So','Mo','Di','Mi','Do','Fr','Sa'];
+ let h='',m='';
+ l.forEach(d=>{const mk=d.slice(0,7);if(mk!==m){m=mk;const c=l.filter(x=>x.startsWith(mk)).length;h+=`<h3>${MONATE[+d.slice(5,7)-1]} ${d.slice(0,4)} <span class="sub">${c} ${c===1?'Tag':'Tage'}</span></h3>`}
+  h+=`<div class="row"><span>${WT[new Date(d+'T00:00:00').getDay()]}, ${dlong(d)}</span><button class="ghost dng" onclick="krankDel('${id}','${d}')" title="Eintrag löschen">×</button></div>`});
+ modal(`<h2>Fehltage <span class="sub">${esc(nameOf(s))}</span></h2><div class="sub">Insgesamt ${l.length} ${l.length===1?'Tag':'Tage'}</div>
+ ${h||'<div class="sub" style="margin-top:12px">Noch keine Fehltage.</div>'}
+ <h3>Tag nachtragen</h3><div style="display:flex;gap:8px"><input type="date" id="k_d" value="${iso(new Date())}"><button onclick="krankAdd('${id}')">Hinzufügen</button></div>
+ <div class="btns"><button class="pri" onclick="closeModal()">Fertig</button></div>`);
+}
+function krankAdd(id){const d=$('#k_d').value,s=sc(id);if(!d)return;if(!s.krank.includes(d))s.krank.push(d);save();render();krankModal(id)}
+function krankDel(id,d){const s=sc(id);s.krank=s.krank.filter(x=>x!==d);save();render();krankModal(id)}
 function togg(aid,sid,v){const a=S.auftraege.find(x=>x.id===aid);if(v)a.done[sid]=true;else delete a.done[sid];save();render()}
 function addVer(id){const v=$('#v_t').value.trim();if(!v)return;sc(id).vereinb.push({d:iso(new Date()),t:v});save();render()}
 function delVer(id,i){sc(id).vereinb.splice(i,1);save();render()}
