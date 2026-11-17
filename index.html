@@ -107,6 +107,8 @@ button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(
 input,select,textarea{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:9px 12px;width:100%}
 input:focus,select:focus,textarea:focus{outline:2px solid var(--ac);outline-offset:-1px}
 textarea{min-height:72px;resize:vertical}
+textarea.grow{field-sizing:content;resize:none;overflow:hidden;line-height:1.35;overflow-wrap:anywhere}
+textarea.grow[rows="1"]{min-height:0}
 label{display:block;font-size:13px;color:var(--tx2);margin:10px 0}
 label input,label select,label textarea{margin-top:4px}
 label.chk{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--tx);margin:0;padding:9px 0;border-top:1px solid var(--bd);cursor:pointer}
@@ -133,7 +135,8 @@ label.chk input{width:20px;height:20px;margin:0;accent-color:var(--ac)}
 .rowact{display:flex;gap:6px;justify-content:flex-end}
 .tb.rw{cursor:pointer;border-radius:10px}
 .tb.nt{grid-template-columns:minmax(0,1fr) 70px 110px 200px}
-.tb.nt>*:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb.nt>*:first-child{overflow-wrap:anywhere}
+.tb.nt .tag{white-space:normal}
 @media(hover:hover){.tb.rw:hover{background:var(--nb)}}
 .tb>*:not(:first-child){text-align:center}
 .les{display:grid;grid-template-columns:78px minmax(0,1fr);gap:14px;padding:12px;border-radius:12px;margin:0 -6px}
@@ -435,10 +438,16 @@ function render(){
  +`<div class="sec">Meine Klassen</div>`+S.klassen.map(k=>`<button class="nv k ${V.tab==='klassen'&&V.klasse===k.id?'on':''}" onclick="go({tab:'klassen',klasse:'${k.id}',schueler:null,ktab:'schueler'})"><span>${esc(k.name)}</span><small>${esc(k.fach)}</small></button>`).join('')
  +`<div class="sidebot"><button class="nv ${V.tab==='mehr'?'on':''}" onclick="go({tab:'mehr',klasse:null,schueler:null,auftrag:null,ktab:'schueler'})">${ic('cog')}<span>Einstellungen</span></button><div class="sidefoot">Sicherung: ${le?dshort(le):'noch nie'}<button onclick="exportJ()">Jetzt exportieren</button></div></div>`;
  if(V.tab==='klassen'&&V.klasse&&!V.schueler&&V.ktab==='sitz')bindSitz();
+ growAll();
 }
+/* Textfelder wachsen mit dem Inhalt (Fallback, falls field-sizing fehlt) */
+const FS=window.CSS&&CSS.supports&&CSS.supports('field-sizing','content');
+function grow(t){if(FS||!t.classList||!t.classList.contains('grow'))return;t.style.height='auto';t.style.height=t.scrollHeight+2+'px'}
+function growAll(){if(!FS)document.querySelectorAll('textarea.grow').forEach(grow)}
+document.addEventListener('input',e=>grow(e.target));
 function modal(h){
  const m=$('#modal'),was=(m.innerHTML||'').length>0;
- window._mt=Date.now();m.innerHTML=`<div class="ov ${was?'still':''}" onclick="if(event.target===this&&Date.now()-window._mt>450)closeModal()"><div class="sheet">${h}</div></div>`;
+ window._mt=Date.now();m.innerHTML=`<div class="ov ${was?'still':''}" onclick="if(event.target===this&&Date.now()-window._mt>450)closeModal()"><div class="sheet">${h}</div></div>`;growAll();
  try{const f=$('#modal input:not([type]),#modal input[type=text]');if(f&&f.focus&&window.matchMedia&&window.matchMedia('(pointer:fine)').matches)f.focus()}catch(e){}
 }
 function closeModal(){$('#modal').innerHTML=''}
@@ -461,7 +470,7 @@ function vHeute(){
  h+=`<div class="g2"><div class="card"><h2>Unterricht heute</h2>`;
  h+=lessons.length?lessons.map(l=>{const cur=nowM>=mins(l.z[0])&&nowM<=mins(l.z[1]),key=t+'|'+l.i;
   return `<div class="les ${cur?'cur':''}"><div><b>${l.i+1}. Std</b><div class="t">${l.z[0]}–${l.z[1]}</div></div><div><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(l.k.name)} · ${esc(l.k.fach)}</b>${cur?'<span class="tag ac">jetzt</span>':''}</div>
-  <input placeholder="Was ist geplant?" value="${esc(S.planung[key]||'')}" oninput="S.planung['${key}']=this.value;save()">
+  <textarea class="grow" rows="1" placeholder="Was ist geplant?" oninput="S.planung['${key}']=this.value;save()">${esc(S.planung[key]||'')}</textarea>
   <div style="margin-top:6px"><button class="pri" onclick="go({tab:'klassen',klasse:'${l.k.id}',ktab:'sitz',schueler:null})">Sitzplan und mündliche Noten</button> <button onclick="go({tab:'klassen',klasse:'${l.k.id}',ktab:'schueler',schueler:null})">Schülerliste</button></div></div></div>`}).join(''):'<div class="sub">'+(info.feiertag||info.ferien?'Heute kein Unterricht: '+esc(info.feiertag||info.ferien)+'.':'Heute kein Unterricht im Stundenplan.')+'</div>';
  h+=`</div><div class="stack"><div class="card"><h2>Krank heute</h2>`+(kr.length?kr.map(s=>`<div class="row click" onclick="go({tab:'klassen',klasse:'${s.klasse}',schueler:'${s.id}'})"><span>${esc(nameOf(s))}</span><span class="tag">${esc(kl(s.klasse).name)}</span></div>`).join(''):'<div class="sub">Niemand krank gemeldet.</div>')+`</div>
  <div class="card"><h2>Offene Aufträge</h2>`+(offen.length?offen.map(o=>`<div class="row click" onclick="go({tab:'auftraege',auftrag:'${o.a.id}'})"><span>${esc(o.a.titel)}</span><span class="tag warn">${o.n} von ${o.all} offen</span></div>`).join(''):'<div class="sub">Alles erledigt.</div>')+`</div><div class="card"><h2>Nächste Ferien und Feiertage</h2>${naechsteHtml()}</div></div></div>`;
@@ -614,7 +623,7 @@ function delKlasse(id){ask('Klasse mit allen Schülern löschen?',()=>{
 function schuelerModal(kid,id){
  const s=id?sc(id):{vn:'',nn:'',tel:'',adr:'',eltern:'',klasse:kid};
  modal(`<h2>${id?'Schüler bearbeiten':'Neuer Schüler'}</h2><div class="two"><label>Vorname<input id="m_vn" value="${esc(s.vn)}"></label><label>Nachname<input id="m_nn" value="${esc(s.nn)}"></label></div>
- <label>Telefon<input id="m_tel" value="${esc(s.tel)}"></label><label>Adresse<input id="m_adr" value="${esc(s.adr)}"></label><label>Eltern, Kontakt<input id="m_el" value="${esc(s.eltern)}"></label>
+ <label>Telefon<input id="m_tel" value="${esc(s.tel)}"></label><label>Adresse<textarea class="grow" rows="1" id="m_adr">${esc(s.adr)}</textarea></label><label>Eltern, Kontakt<textarea class="grow" rows="1" id="m_el">${esc(s.eltern)}</textarea></label>
  ${id?`<label>Klasse<select id="m_k">${S.klassen.map(k=>`<option value="${k.id}" ${k.id===s.klasse?'selected':''}>${esc(k.name)} · ${esc(k.fach)}</option>`).join('')}</select></label>`:''}
  <div class="btns"><button onclick="closeModal()">Abbrechen</button><button class="pri" onclick="schuelerSave('${kid}','${id||''}')">Speichern</button></div>`);
 }
@@ -640,12 +649,12 @@ function vSchueler(s){
  ${V.ntab==='uebersicht'?`<h3>Schriftlich</h3><div class="chips">${chips('s')}</div><h3>Mündlich</h3><div class="chips">${chips('m')}</div>`:notenListe(s)}</div>
  <div class="g2e"><div class="stack">
  <div class="card"><h2>Stammdaten</h2><div class="two"><label>Vorname<input value="${esc(s.vn)}" oninput="upd('${s.id}','vn',this.value)"></label><label>Nachname<input value="${esc(s.nn)}" oninput="upd('${s.id}','nn',this.value)"></label></div>
- <label>Telefon<input value="${esc(s.tel)}" oninput="upd('${s.id}','tel',this.value)"></label><label>Adresse<input value="${esc(s.adr)}" oninput="upd('${s.id}','adr',this.value)"></label><label>Eltern, Kontakt<input value="${esc(s.eltern)}" oninput="upd('${s.id}','eltern',this.value)"></label></div>
+ <label>Telefon<input value="${esc(s.tel)}" oninput="upd('${s.id}','tel',this.value)"></label><label>Adresse<textarea class="grow" rows="1" oninput="upd('${s.id}','adr',this.value)">${esc(s.adr)}</textarea></label><label>Eltern, Kontakt<textarea class="grow" rows="1" oninput="upd('${s.id}','eltern',this.value)">${esc(s.eltern)}</textarea></label></div>
  </div><div class="stack">
- <div class="card"><h2>Lernziele dieses Schuljahr</h2><textarea placeholder="Ziele aus der Reflexion" oninput="upd('${s.id}','ziel',this.value)">${esc(s.ziel)}</textarea></div>
- <div class="card"><h2>Vereinbarungen</h2>${s.vereinb.map((v,i)=>`<div class="row"><span class="sub" style="white-space:nowrap">${dshort(v.d)}</span><input value="${esc(v.t)}" oninput="sc('${s.id}').vereinb[${i}].t=this.value;save()"><button class="ghost dng" onclick="delVer('${s.id}',${i})" title="Löschen">×</button></div>`).join('')}
- <div style="display:flex;gap:8px;margin-top:10px"><input id="v_t" placeholder="z. B. Hörverstehen schulen"><button onclick="addVer('${s.id}')">Hinzufügen</button></div></div>
- <div class="card"><h2>Aktueller Stand</h2><textarea placeholder="Woran arbeitet der Schüler gerade?" oninput="upd('${s.id}','stand',this.value)">${esc(s.stand)}</textarea></div>
+ <div class="card"><h2>Lernziele dieses Schuljahr</h2><textarea class="grow" placeholder="Ziele aus der Reflexion" oninput="upd('${s.id}','ziel',this.value)">${esc(s.ziel)}</textarea></div>
+ <div class="card"><h2>Vereinbarungen</h2>${s.vereinb.map((v,i)=>`<div class="row"><span class="sub" style="white-space:nowrap">${dshort(v.d)}</span><textarea class="grow" rows="1" oninput="sc('${s.id}').vereinb[${i}].t=this.value;save()">${esc(v.t)}</textarea><button class="ghost dng" onclick="delVer('${s.id}',${i})" title="Löschen">×</button></div>`).join('')}
+ <div style="display:flex;gap:8px;margin-top:10px"><textarea class="grow" rows="1" id="v_t" placeholder="z. B. Hörverstehen schulen"></textarea><button onclick="addVer('${s.id}')">Hinzufügen</button></div></div>
+ <div class="card"><h2>Aktueller Stand</h2><textarea class="grow" placeholder="Woran arbeitet der Schüler gerade?" oninput="upd('${s.id}','stand',this.value)">${esc(s.stand)}</textarea></div>
  <div class="card"><h2>Aufträge</h2>${aufs.length?aufs.map(a=>`<label class="chk"><input type="checkbox" ${a.done[s.id]?'checked':''} onchange="togg('${a.id}','${s.id}',this.checked)"><span>${esc(a.titel)} <span class="sub">${a.faellig?'bis '+dshort(a.faellig):''}</span></span></label>`).join(''):'<div class="sub">Keine Aufträge.</div>'}
  <button class="btn" onclick="auftragModal(null,'${s.id}')">+ Auftrag nur für ${esc(s.vn)}</button></div>
  </div></div>`;
@@ -666,9 +675,9 @@ function noteModal(sid,nid){
  const s=sc(sid),n=nid?s.noten.find(x=>x.id===nid):{typ:'m',kat:'',w:2,d:iso(new Date()),th:'',n:''};
  modal(`<h2>${nid?'Note bearbeiten':'Note eintragen'} <span class="sub">${esc(nameOf(s))}</span></h2>
  <label>Bereich<select id="n_typ" onchange="katOpts()"><option value="s" ${n.typ==='s'?'selected':''}>Schriftlich</option><option value="m" ${n.typ==='m'?'selected':''}>Mündlich</option></select></label>
- <label>Thema<input id="n_th" value="${esc(n.th||'')}"></label>
+ <label>Thema<textarea class="grow" rows="1" id="n_th">${esc(n.th||'')}</textarea></label>
  <div class="two"><label>Art<select id="n_kat"></select></label><label>Note<select id="n_w">${notenOpts(n.w)}</select></label></div>
- <div class="two"><label>Datum<input type="date" id="n_d" value="${n.d}"></label><label>Notiz<input id="n_n" value="${esc(n.n)}"></label></div>
+ <div class="two"><label>Datum<input type="date" id="n_d" value="${n.d}"></label><label>Notiz<textarea class="grow" rows="1" id="n_n">${esc(n.n)}</textarea></label></div>
  <div class="btns"><button onclick="closeModal()">Abbrechen</button><button class="pri" onclick="noteSave('${sid}','${nid||''}')">Speichern</button></div>
  ${nid?`<button class="btn dng" style="margin-top:10px" onclick="noteDel('${sid}','${nid}')">Note löschen</button>`:''}`);
  window._nk=n.kat;katOpts();
@@ -718,7 +727,7 @@ function deskModal(kid,did){
  <label>Schüler am Tisch<select id="d_s"><option value="">– frei –</option>${ss.map(x=>`<option value="${x.id}" ${x.id===d.sid?'selected':''}>${esc(x.nn)}, ${esc(x.vn)}</option>`).join('')}</select></label>
  <h3>Mündliche Note eintragen</h3>
  <div class="two"><label>Note<select id="d_n"><option value="">–</option>${notenOpts(null)}</select></label><label>Art<select id="d_k">${S.set.katM.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label></div>
- <label>Notiz<input id="d_t" placeholder="z. B. Vortrag Unit 3"></label>
+ <label>Notiz<textarea class="grow" rows="1" id="d_t" placeholder="z. B. Vortrag Unit 3"></textarea></label>
  ${last?`<div class="sub" style="margin:8px 0 6px">Bisherige mündliche Noten, antippen zum Ändern oder Löschen:</div><div class="chips">${last}</div>`:''}
  <div class="btns"><button onclick="closeModal()">Abbrechen</button><button class="pri" onclick="deskSave('${kid}','${did}')">Speichern</button></div>
  <h3>Weitere Aktionen</h3><div class="acts">${s?`<button onclick="closeModal();go({schueler:'${s.id}'})">Karteikarte</button><button onclick="schuelerModal('${kid}','${s.id}')">Schüler bearbeiten</button><button onclick="deskFree('${kid}','${did}')">Tisch leeren</button><button class="dng" onclick="delSchueler('${s.id}')">Schüler löschen</button>`:''}<button class="dng" onclick="deskDel('${kid}','${did}')">Tisch löschen</button></div>`);
@@ -758,7 +767,7 @@ function vAuftraege(){
 }
 function auftragModal(preK,preS,eid){
  const a=eid?S.auftraege.find(x=>x.id===eid):null,indiv=a?a.klassen.length===0:!!preS,sid=a?(a.schueler||[])[0]:preS;
- modal(`<h2>${a?'Auftrag bearbeiten':'Neuer Auftrag'}</h2><label>Titel<input id="a_t" placeholder="z. B. Workbook S. 42" value="${a?esc(a.titel):''}"></label><label>Fällig am<input type="date" id="a_d" value="${a?a.faellig||'':''}"></label>
+ modal(`<h2>${a?'Auftrag bearbeiten':'Neuer Auftrag'}</h2><label>Titel<textarea class="grow" rows="1" id="a_t" placeholder="z. B. Workbook S. 42">${a?esc(a.titel):''}</textarea></label><label>Fällig am<input type="date" id="a_d" value="${a?a.faellig||'':''}"></label>
  ${indiv?`<div class="sub">Gilt nur für ${sid&&sc(sid)?esc(nameOf(sc(sid))):'einen Schüler'}.</div>`:`<h3>Für welche Klassen?</h3>`+S.klassen.map(k=>`<label class="chk"><input type="checkbox" class="a_k" value="${k.id}" ${a?(a.klassen.includes(k.id)?'checked':''):(k.id===preK?'checked':'')}>${esc(k.name)} <span class="sub">${esc(k.fach)}</span></label>`).join('')}
  <div class="btns"><button onclick="closeModal()">Abbrechen</button><button class="pri" onclick="auftragSave('${indiv&&sid?sid:''}','${eid||''}')">Speichern</button></div>`);
 }
@@ -782,7 +791,7 @@ function vWoche(){
   const inf=dayInfo(ds),free=inf.feiertag||inf.ferien;h+=`<div class="card ${inf.feiertag?'fe':inf.ferien?'fr':''}"><h2>${DAYS[i]} <span class="sub">${dshort(ds)}</span> ${free?`<span class="tag ${inf.feiertag?'fe':'fr'}">${esc(free)}</span>`:''}</h2>`;
   let any=false;
   S.zeiten.forEach((z,j)=>{const kid=S.plan[i+'-'+j];if(free||!kid||!kl(kid))return;any=true;const key=ds+'|'+j;
-   h+=`<div style="margin:0 0 10px"><div class="sub" style="margin-bottom:3px">${j+1}. Std · ${esc(kl(kid).name)} ${esc(kl(kid).fach)} · ${z[0]}</div><input placeholder="Was ist geplant?" value="${esc(S.planung[key]||'')}" oninput="S.planung['${key}']=this.value;save()"></div>`});
+   h+=`<div style="margin:0 0 10px"><div class="sub" style="margin-bottom:3px">${j+1}. Std · ${esc(kl(kid).name)} ${esc(kl(kid).fach)} · ${z[0]}</div><textarea class="grow" rows="1" placeholder="Was ist geplant?" oninput="S.planung['${key}']=this.value;save()">${esc(S.planung[key]||'')}</textarea></div>`});
   if(!any)h+=`<div class="sub">${free?'Kein Unterricht.':'Keine Stunden.'}</div>`;
   h+=`</div>`;
  }
@@ -801,9 +810,9 @@ function vMehr(){
  h+=`</table></div></div><div class="stack">
  <div class="card"><h2>Darstellung</h2><div class="seg" style="margin:0"><button class="${th==='light'?'on':''}" onclick="setTheme('light')">Hell</button><button class="${th==='dark'?'on':''}" onclick="setTheme('dark')">Dunkel</button><button class="${th==='auto'?'on':''}" onclick="setTheme('auto')">System</button></div></div>
  <div class="card"><h2>Noten</h2><label>Gewicht schriftlich in Prozent (mündlich: Rest)<input type="number" min="0" max="100" value="${S.set.gew}" oninput="S.set.gew=Math.min(100,Math.max(0,+this.value||0));save()"></label>
- <label>Schriftliche Arten (mit Komma trennen)<input value="${esc(S.set.katS.join(', '))}" onchange="setList('katS',this.value)"></label>
- <label>Mündliche Arten (mit Komma trennen)<input value="${esc(S.set.katM.join(', '))}" onchange="setList('katM',this.value)"></label>
- <label>Fächer (mit Komma trennen)<input value="${esc(S.set.faecher.join(', '))}" onchange="setList('faecher',this.value)"></label></div>
+ <label>Schriftliche Arten (mit Komma trennen)<textarea class="grow" rows="1" onchange="setList('katS',this.value)">${esc(S.set.katS.join(', '))}</textarea></label>
+ <label>Mündliche Arten (mit Komma trennen)<textarea class="grow" rows="1" onchange="setList('katM',this.value)">${esc(S.set.katM.join(', '))}</textarea></label>
+ <label>Fächer (mit Komma trennen)<textarea class="grow" rows="1" onchange="setList('faecher',this.value)">${esc(S.set.faecher.join(', '))}</textarea></label></div>
  <div class="card"><h2>Als App (iPad)</h2><div id="pwst">${pwaStatus()}</div></div>
  <div class="card"><h2>Automatische Sicherung</h2><div id="abst">${abStatus()}</div></div>
  <div class="card"><h2>Sicherung per Hand</h2><div class="sub">Letzte Sicherung: ${S.set.letzterExport?dshort(S.set.letzterExport):'noch nie'}. Alle Daten liegen nur in diesem Browser.</div>
