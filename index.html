@@ -132,6 +132,8 @@ label.chk input{width:20px;height:20px;margin:0;accent-color:var(--ac)}
 .mini{padding:4px 10px;font-size:13px;border-radius:8px}
 .rowact{display:flex;gap:6px;justify-content:flex-end}
 .tb.rw{cursor:pointer;border-radius:10px}
+.tb.nt{grid-template-columns:minmax(0,1fr) 70px 110px 200px}
+.tb.nt>*:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 @media(hover:hover){.tb.rw:hover{background:var(--nb)}}
 .tb>*:not(:first-child){text-align:center}
 .les{display:grid;grid-template-columns:78px minmax(0,1fr);gap:14px;padding:12px;border-radius:12px;margin:0 -6px}
@@ -198,6 +200,7 @@ aside{padding-left:calc(12px + env(safe-area-inset-left));padding-top:calc(18px 
  button:active,.nv:active,.chip:active{transform:scale(.97);transition-duration:.05s}
  .sitz{touch-action:pan-y}
 }
+@media(max-width:800px){.tb.nt{grid-template-columns:minmax(0,1fr) 44px 64px 104px}.tb.nt>*:nth-child(4){display:block}}
 @media(prefers-color-scheme:dark){:root:not([data-theme=light]) .topbar{background:var(--bg)}}
 </style>
 </head>
@@ -404,7 +407,7 @@ function normalize(d){
  return d;
 }
 let S=normalize(load()||seed());
-let V={tab:'heute',q:'',qk:'',back:null,klasse:null,ktab:'schueler',schueler:null,auftrag:null,week:0,year:new Date().getFullYear()};
+let V={tab:'heute',q:'',qk:'',back:null,klasse:null,ktab:'schueler',schueler:null,auftrag:null,week:0,year:new Date().getFullYear(),ntab:'liste'};
 const kl=id=>S.klassen.find(k=>k.id===id);
 const sc=id=>S.schueler.find(s=>s.id===id);
 const nameOf=s=>s.vn+' '+s.nn;
@@ -525,7 +528,7 @@ function initTop(){
    if(e.key==='Enter'&&e.target&&e.target.tagName==='INPUT'&&e.target.closest&&e.target.closest('#modal')&&e.target.type!=='file'){const b=$('#modal .pri');if(b){e.preventDefault();b.click()}}
   });
  }
- $('#top').innerHTML=`<div class="gs">${ic('search')}<input id="gq" type="search" placeholder="Suchen: Klasse, Name, Auftrag … (Strg+K)" autocomplete="off" oninput="gSearch()" onfocus="gSearch()" onkeydown="gKey(event)"><div id="gr" class="gr"></div></div>`;
+ $('#top').innerHTML=`<div class="gs">${ic('search')}<input id="gq" type="search" placeholder="Suchen" autocomplete="off" oninput="gSearch()" onfocus="gSearch()" onkeydown="gKey(event)"><div id="gr" class="gr"></div></div>`;
  if(document.addEventListener){
   document.addEventListener('click',e=>{if(e.target.closest&&!e.target.closest('.gs'))gClose()});
   document.addEventListener('keydown',e=>{const t=e.target&&e.target.tagName;if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();$('#gq').focus()}else if(e.key==='/'&&t!=='INPUT'&&t!=='TEXTAREA'&&t!=='SELECT'){e.preventDefault();$('#gq').focus()}});
@@ -633,10 +636,11 @@ function vSchueler(s){
  return `<div class="ph"><div class="head"><div class="avwrap" onclick="fotoModal('${s.id}')" title="Foto ändern">${avHtml(s,'lg')}<span class="avedit">${FOTO[s.id]?'ändern':'+ Foto'}</span></div><div><button class="crumb" onclick="${V.back==='alle'?"go({tab:'schueler',klasse:null,schueler:null})":"go({schueler:null})"}">‹ ${V.back==='alle'?'SchülerInnen':esc(k.name)+' '+esc(k.fach)}</button><h1>${esc(nameOf(s))}</h1><div class="sub">${kr?'<span class="tag bad">heute krank</span> ':''}Fehltage insgesamt: ${s.krank.length}</div></div></div>
  <div class="acts"><button onclick="schuelerModal('${s.klasse}','${s.id}')">Bearbeiten</button><button onclick="fotoModal('${s.id}')">${FOTO[s.id]?'Foto ändern':'Foto hinzufügen'}</button><button onclick="krank('${s.id}',${!kr})">${kr?'Krankmeldung aufheben':'Heute krank melden'}</button><button onclick="transferModal('${s.klasse}','${s.id}')">In andere Klasse oder anderes Fach kopieren</button><button class="dng" onclick="delSchueler('${s.id}')">Löschen</button></div></div>
  <div class="kpis"><div class="kpi"><b>${num(st.a)}</b><span>schriftlich Ø</span></div><div class="kpi"><b>${num(st.b)}</b><span>mündlich Ø</span></div><div class="kpi"><b>${zn(st.g)}</b><span>Zeugnisnote (${num(st.g)}, ${S.set.gew}/${100-S.set.gew})</span></div></div>
+ <div class="card" style="margin-bottom:18px"><div class="row" style="flex-wrap:wrap;gap:10px"><h2 style="margin:0">Noten</h2><div style="display:flex;gap:8px;flex-wrap:wrap"><div class="seg" style="margin:0"><button class="${V.ntab!=='uebersicht'?'on':''}" onclick="nTab('liste')">Liste</button><button class="${V.ntab==='uebersicht'?'on':''}" onclick="nTab('uebersicht')">Übersicht</button></div><button class="pri" onclick="noteModal('${s.id}')">+ Note eintragen</button></div></div>
+ ${V.ntab==='uebersicht'?`<h3>Schriftlich</h3><div class="chips">${chips('s')}</div><h3>Mündlich</h3><div class="chips">${chips('m')}</div>`:notenListe(s)}</div>
  <div class="g2e"><div class="stack">
  <div class="card"><h2>Stammdaten</h2><div class="two"><label>Vorname<input value="${esc(s.vn)}" oninput="upd('${s.id}','vn',this.value)"></label><label>Nachname<input value="${esc(s.nn)}" oninput="upd('${s.id}','nn',this.value)"></label></div>
  <label>Telefon<input value="${esc(s.tel)}" oninput="upd('${s.id}','tel',this.value)"></label><label>Adresse<input value="${esc(s.adr)}" oninput="upd('${s.id}','adr',this.value)"></label><label>Eltern, Kontakt<input value="${esc(s.eltern)}" oninput="upd('${s.id}','eltern',this.value)"></label></div>
- <div class="card"><h2>Noten</h2><h3 style="margin-top:0">Schriftlich</h3><div class="chips">${chips('s')}</div><h3>Mündlich</h3><div class="chips">${chips('m')}</div><button class="btn" onclick="noteModal('${s.id}')">+ Note eintragen</button></div>
  </div><div class="stack">
  <div class="card"><h2>Lernziele dieses Schuljahr</h2><textarea placeholder="Ziele aus der Reflexion" oninput="upd('${s.id}','ziel',this.value)">${esc(s.ziel)}</textarea></div>
  <div class="card"><h2>Vereinbarungen</h2>${s.vereinb.map((v,i)=>`<div class="row"><span class="sub" style="white-space:nowrap">${dshort(v.d)}</span><input value="${esc(v.t)}" oninput="sc('${s.id}').vereinb[${i}].t=this.value;save()"><button class="ghost dng" onclick="delVer('${s.id}',${i})" title="Löschen">×</button></div>`).join('')}
@@ -646,6 +650,12 @@ function vSchueler(s){
  <button class="btn" onclick="auftragModal(null,'${s.id}')">+ Auftrag nur für ${esc(s.vn)}</button></div>
  </div></div>`;
 }
+function notenListe(s){
+ const l=s.noten.slice().sort((a,b)=>b.d.localeCompare(a.d));
+ if(!l.length)return '<div class="sub" style="margin-top:12px">Noch keine Note.</div>';
+ return `<div style="margin-top:12px"><div class="tb nt hd"><div>Thema</div><div>Note</div><div>Datum</div><div>Typ</div></div>`+l.map(n=>`<div class="tb nt rw" onclick="noteModal('${s.id}','${n.id}')"><div>${esc(n.th||n.n)||'<span class="sub">–</span>'}</div><div><b>${fmt(n.w)}</b></div><div>${dshort(n.d)}</div><div><span class="tag">${esc(n.kat)} · ${n.typ==='s'?'schriftlich':'mündlich'}</span></div></div>`).join('')+'</div>';
+}
+function nTab(v){V.ntab=v;render()}
 function upd(id,f,v){sc(id)[f]=v;save()}
 function krank(id,v){const s=sc(id),t=iso(new Date());s.krank=s.krank.filter(x=>x!==t);if(v)s.krank.push(t);save();render()}
 function togg(aid,sid,v){const a=S.auftraege.find(x=>x.id===aid);if(v)a.done[sid]=true;else delete a.done[sid];save();render()}
@@ -653,9 +663,10 @@ function addVer(id){const v=$('#v_t').value.trim();if(!v)return;sc(id).vereinb.p
 function delVer(id,i){sc(id).vereinb.splice(i,1);save();render()}
 function delSchueler(id){ask('Schüler löschen?',()=>{fotoDel(id);S.schueler=S.schueler.filter(s=>s.id!==id);Object.keys(S.sitz).forEach(k=>{S.sitz[k].forEach(d=>{if(d.sid===id)d.sid=''})});save();go(V.back==='alle'?{tab:'schueler',klasse:null,schueler:null}:{schueler:null})})}
 function noteModal(sid,nid){
- const s=sc(sid),n=nid?s.noten.find(x=>x.id===nid):{typ:'m',kat:'',w:2,d:iso(new Date()),n:''};
+ const s=sc(sid),n=nid?s.noten.find(x=>x.id===nid):{typ:'m',kat:'',w:2,d:iso(new Date()),th:'',n:''};
  modal(`<h2>${nid?'Note bearbeiten':'Note eintragen'} <span class="sub">${esc(nameOf(s))}</span></h2>
  <label>Bereich<select id="n_typ" onchange="katOpts()"><option value="s" ${n.typ==='s'?'selected':''}>Schriftlich</option><option value="m" ${n.typ==='m'?'selected':''}>Mündlich</option></select></label>
+ <label>Thema<input id="n_th" value="${esc(n.th||'')}"></label>
  <div class="two"><label>Art<select id="n_kat"></select></label><label>Note<select id="n_w">${notenOpts(n.w)}</select></label></div>
  <div class="two"><label>Datum<input type="date" id="n_d" value="${n.d}"></label><label>Notiz<input id="n_n" value="${esc(n.n)}"></label></div>
  <div class="btns"><button onclick="closeModal()">Abbrechen</button><button class="pri" onclick="noteSave('${sid}','${nid||''}')">Speichern</button></div>
@@ -668,7 +679,7 @@ function katOpts(){
  window._nk=null;
 }
 function noteSave(sid,nid){
- const s=sc(sid),o={typ:$('#n_typ').value,kat:$('#n_kat').value,w:parseFloat($('#n_w').value),d:$('#n_d').value||iso(new Date()),n:$('#n_n').value};
+ const s=sc(sid),o={typ:$('#n_typ').value,kat:$('#n_kat').value,w:parseFloat($('#n_w').value),d:$('#n_d').value||iso(new Date()),th:$('#n_th').value.trim(),n:$('#n_n').value};
  if(nid)Object.assign(s.noten.find(x=>x.id===nid),o);else s.noten.push(Object.assign({id:uid()},o));
  save();closeModal();render();
 }
