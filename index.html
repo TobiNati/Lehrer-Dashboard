@@ -255,11 +255,11 @@ function naechste(n){
 }
 function naechsteHtml(){
  const now=new Date();now.setHours(0,0,0,0);
- return naechste(6).map(e=>{
-  const d=Math.round((new Date(e.s+'T00:00:00')-now)/864e5);
-  const when=d<=0?(e.s===e.e?'heute':'läuft bis '+dshort(e.e)):d===1?'morgen':'in '+d+' Tagen';
-  const rng=e.s===e.e?dlong(e.s):dshort(e.s)+' – '+dlong(e.e);
-  return `<div class="row"><div><span class="tag ${e.t}">${e.t==='fe'?'Feiertag':'Ferien'}</span> ${esc(e.n)}<div class="sub">${rng}</div></div><span class="sub">${when}</span></div>`}).join('');
+ const l=naechste(6).map(e=>({e:e,d:Math.round((new Date(e.s+'T00:00:00')-now)/864e5)})).filter(o=>o.d<=50);
+ return l.length?l.map(({e,d})=>{
+  const when=d<=0?(e.s===e.e?'heute':'bis '+dshort(e.e)):d===1?'morgen':'in '+d+' Tagen';
+  const rng=e.s===e.e?dshort(e.s):dshort(e.s)+'–'+dshort(e.e);
+  return `<div class="row" style="padding:6px 0;font-size:14px"><span><span class="tag ${e.t}">${e.t==='fe'?'Feiertag':'Ferien'}</span> ${esc(e.n)} <span class="sub">${rng}</span></span><span class="sub" style="white-space:nowrap">${when}</span></div>`}).join(''):'<div class="sub">Keine Ferien oder Feiertage in den nächsten 50 Tagen.</div>';
 }
 function vKalender(){
  const y=V.year,t=iso(new Date()),fm=feiertage(y),cy=new Date().getFullYear();
