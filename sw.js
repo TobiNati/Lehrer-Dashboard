@@ -1,5 +1,5 @@
 // Offline-Cache. Bei Änderungen an index.html die Versionsnummer erhöhen.
-const V = 'lehrerdash-v13';
+const V = 'lehrerdash-v14';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(V).then(c => Promise.all(FILES.map(f => c.add(new Request(f, { cache: 'reload' })).catch(() => {})))).then(() => self.skipWaiting()));
