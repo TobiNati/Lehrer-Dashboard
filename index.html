@@ -433,6 +433,9 @@ function stats(s){
 const klasseStudents=kid=>S.schueler.filter(s=>s.klasse===kid).sort((a,b)=>a.nn.localeCompare(b.nn,'de'));
 const applies=(a,s)=>a.klassen.includes(s.klasse)||(a.schueler||[]).includes(s.id);
 const auftraegeFor=s=>S.auftraege.filter(a=>applies(a,s));
+const aKlassen=a=>[...new Set(a.klassen.concat((a.schueler||[]).map(i=>sc(i)?sc(i).klasse:'')))].map(kl).filter(Boolean);
+function faelligTag(f){if(!f)return '<span class="tag">ohne Datum</span>';const x=dueDays(f);return `<span class="tag ${x<0?'bad':x===0?'warn':''}">${x<0?'überfällig seit ':x===0?'heute fällig, ':'fällig '}${dshort(f)}</span>`}
+const offenFuer=kid=>S.auftraege.map(a=>({a:a,n:klasseStudents(kid).filter(s=>applies(a,s)&&!a.done[s.id]).length})).filter(o=>o.n>0).sort((x,y)=>(x.a.faellig||'9999').localeCompare(y.a.faellig||'9999'));
 
 function go(p){
  if(!('back' in p))V.back=null;Object.assign(V,p);render();window.scrollTo(0,0);
@@ -481,10 +484,11 @@ function vHeute(){
  h+=lessons.length?lessons.map(l=>{const cur=nowM>=mins(l.z[0])&&nowM<=mins(l.z[1]),key=t+'|'+l.i;
   return `<div class="les ${cur?'cur':''}"><div><b>${l.i+1}. Std</b><div class="t">${l.z[0]}–${l.z[1]}</div></div><div><div style="display:flex;justify-content:space-between;gap:8px"><b>${esc(l.k.name)} · ${esc(l.k.fach)}</b>${cur?'<span class="tag ac">jetzt</span>':''}</div>
   <textarea class="grow" rows="1" placeholder="Was ist geplant?" oninput="S.planung['${key}']=this.value;save()">${esc(S.planung[key]||'')}</textarea>
+  ${offenFuer(l.k.id).map(o=>`<div class="row click" style="padding:6px 0" onclick="go({tab:'auftraege',auftrag:'${o.a.id}'})"><span>${esc(o.a.titel)} <span class="sub">${o.n} offen</span></span>${faelligTag(o.a.faellig)}</div>`).join('')}
   <div style="margin-top:6px"><button class="pri" onclick="go({tab:'klassen',klasse:'${l.k.id}',ktab:'sitz',schueler:null})">Sitzplan und mündliche Noten</button> <button onclick="go({tab:'klassen',klasse:'${l.k.id}',ktab:'schueler',schueler:null})">Schülerliste</button></div></div></div>`}).join(''):'<div class="sub">'+(info.feiertag||info.ferien?'Heute kein Unterricht: '+esc(info.feiertag||info.ferien)+'.':'Heute kein Unterricht im Stundenplan.')+'</div>';
  const nz=[];S.schueler.forEach(s=>s.notizen.forEach(n=>{if(!n.done&&n.f&&dueDays(n.f)<=7)nz.push({s:s,n:n})}));nz.sort((a,b)=>a.n.f.localeCompare(b.n.f));
  h+=`</div><div class="stack">`+(nz.length?`<div class="card"><h2>Fällige Notizen</h2>`+nz.map(o=>`<div class="row click" onclick="go({tab:'klassen',klasse:'${o.s.klasse}',schueler:'${o.s.id}'})"><span><b>${esc(nameOf(o.s))}</b> <span class="sub">${esc(o.n.t.slice(0,60))}</span></span>${dueTag(o.n)}</div>`).join('')+`</div>`:'')+`<div class="card"><h2>Krank heute</h2>`+(kr.length?kr.map(s=>`<div class="row click" onclick="go({tab:'klassen',klasse:'${s.klasse}',schueler:'${s.id}'})"><span>${esc(nameOf(s))}</span><span class="tag">${esc(kl(s.klasse).name)}</span></div>`).join(''):'<div class="sub">Niemand krank gemeldet.</div>')+`</div>
- <div class="card"><h2>Offene Aufträge</h2>`+(offen.length?offen.map(o=>`<div class="row click" onclick="go({tab:'auftraege',auftrag:'${o.a.id}'})"><span>${esc(o.a.titel)}</span><span class="tag warn">${o.n} von ${o.all} offen</span></div>`).join(''):'<div class="sub">Alles erledigt.</div>')+`</div><div class="card"><h2>Nächste Ferien und Feiertage</h2>${naechsteHtml()}</div></div></div>`;
+ <div class="card"><h2>Offene Aufträge</h2>`+(offen.length?offen.map(o=>`<div class="row click" onclick="go({tab:'auftraege',auftrag:'${o.a.id}'})"><span>${esc(o.a.titel)}<div class="sub">${aKlassen(o.a).map(k=>esc(k.name+' '+k.fach)).join(', ')}${o.a.faellig?' · bis '+dshort(o.a.faellig):''}</div></span><span class="tag warn">${o.n} von ${o.all} offen</span></div>`).join(''):'<div class="sub">Alles erledigt.</div>')+`</div><div class="card"><h2>Nächste Ferien und Feiertage</h2>${naechsteHtml()}</div></div></div>`;
  return h;
 }
 
