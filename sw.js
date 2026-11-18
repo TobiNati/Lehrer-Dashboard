@@ -1,5 +1,5 @@
 // Offline-Cache. Bei Änderungen an index.html die Versionsnummer erhöhen.
-const V = 'lehrerdash-v21';
+const V = 'lehrerdash-v22';
 // Lesehilfen für den Import (PDF, Excel, Texterkennung) aus dem Netz, nach dem ersten Laden offline
 const LIBS = 'lehrerdash-libs';
 const LIBHOSTS = ['cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'tessdata.projectnaptha.com'];
