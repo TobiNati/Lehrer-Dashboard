@@ -165,6 +165,15 @@ textarea.zg{min-height:140px}
 .ov{position:fixed;inset:0;background:rgba(10,20,28,.5);display:flex;align-items:center;justify-content:center;z-index:30;padding:16px}
 .sheet{background:var(--card);width:100%;max-width:520px;max-height:92vh;max-height:92dvh;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;border-radius:18px;padding:22px}
 .btns{display:flex;gap:10px;justify-content:flex-end;margin-top:16px}
+.sheet.wide{max-width:1100px}
+.imt{overflow:auto;-webkit-overflow-scrolling:touch;max-height:52vh;max-height:52dvh;border:1px solid var(--bd);border-radius:12px}
+.imt table{border-collapse:collapse;min-width:100%;font-size:14px}
+.imt th{position:sticky;top:0;z-index:1;background:var(--card);text-align:left;font-size:12px;font-weight:500;color:var(--tx2);padding:8px 6px;vertical-align:top}
+.imt td{border-top:1px solid var(--bd);padding:4px;vertical-align:top;white-space:nowrap}
+.imt td input:not([type]){min-width:120px;margin:0;padding:6px 8px}
+.imt td input[type=checkbox]{width:20px;height:20px;margin:10px 6px;accent-color:var(--ac)}
+.imt tr.off td{opacity:.45}
+.imt th select{width:auto;min-width:130px;margin:0}
 .btns .btn{width:auto;margin:0}
 .btns.two{display:grid}
 .week{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
@@ -339,7 +348,7 @@ function seed(){
  const K=[{id:'k1',name:'7a',fach:'Englisch'},{id:'k2',name:'8c',fach:'Englisch'},{id:'k3',name:'9b',fach:'Geschichte'}];
  const sch=[];
  K.forEach((k,ki)=>{for(let i=0;i<8;i++){
-  const s={id:uid(),klasse:k.id,vn:VN[(i+ki*3)%12],nn:NN[(i*5+ki*2)%12],tel:'0170 '+(1000000+Math.floor(rnd()*8999999)),adr:'Musterweg '+(1+i)+', 12345 Musterstadt',eltern:'',ziel:'',stand:'',vereinb:[],noten:[],krank:[],unent:[],notizen:[],zeugnis:''};
+  const s={id:uid(),klasse:k.id,vn:VN[(i+ki*3)%12],nn:NN[(i*5+ki*2)%12],tel:'0170 '+(1000000+Math.floor(rnd()*8999999)),adr:'Musterweg '+(1+i)+', 12345 Musterstadt',eltern:'',geb:'',mail:'',ziel:'',stand:'',vereinb:[],noten:[],krank:[],unent:[],notizen:[],zeugnis:''};
   const ns=2+Math.floor(rnd()*3),nm=2+Math.floor(rnd()*4);
   for(let j=0;j<ns;j++)s.noten.push({id:uid(),typ:'s',kat:j%2?'Test':'Klassenarbeit',w:NOTEN[2+Math.floor(rnd()*10)][1],d:daysAgo(10+j*14),n:''});
   for(let j=0;j<nm;j++)s.noten.push({id:uid(),typ:'m',kat:j%2?'Vortrag':'Mitarbeit',w:NOTEN[2+Math.floor(rnd()*9)][1],d:daysAgo(3+j*9),n:''});
@@ -414,7 +423,7 @@ function normalize(d){
  d.klassen=d.klassen||[];d.schueler=d.schueler||[];d.auftraege=d.auftraege||[];d.plan=d.plan||{};d.planung=d.planung||{};d.sitz=d.sitz||{};
  if(!d.zeiten||!d.zeiten.length)d.zeiten=[['07:55','08:40'],['08:45','09:30'],['09:50','10:35'],['10:40','11:25'],['11:45','12:30'],['12:35','13:20'],['13:30','14:15'],['14:20','15:05']];
  d.set=Object.assign({gew:50,katS:['Klassenarbeit','Test','Vokabeltest'],katM:['Mitarbeit','Vortrag','Referat','Hausaufgabe'],faecher:['Englisch','Geschichte','Deutsch','Mathematik'],letzterExport:null},d.set||{});
- d.schueler.forEach(s=>{s.noten=s.noten||[];s.krank=s.krank||[];s.unent=s.unent||[];s.vereinb=s.vereinb||[];s.notizen=s.notizen||[];s.vereinb.forEach(v=>{if(!v.mit)v.mit='s'});['vn','nn','tel','adr','eltern','ziel','stand','zeugnis'].forEach(k=>{if(s[k]==null)s[k]=''})});
+ d.schueler.forEach(s=>{s.noten=s.noten||[];s.krank=s.krank||[];s.unent=s.unent||[];s.vereinb=s.vereinb||[];s.notizen=s.notizen||[];s.vereinb.forEach(v=>{if(!v.mit)v.mit='s'});['vn','nn','tel','adr','eltern','ziel','stand','zeugnis','geb','mail'].forEach(k=>{if(s[k]==null)s[k]=''})});
  d.auftraege.forEach(a=>{a.klassen=a.klassen||[];a.schueler=a.schueler||[];a.done=a.done||{}});
  d.klassen.forEach(k=>{if(!d.sitz[k.id])d.sitz[k.id]=[]});
  return d;
@@ -458,9 +467,9 @@ const FS=window.CSS&&CSS.supports&&CSS.supports('field-sizing','content');
 function grow(t){if(FS||!t.classList||!t.classList.contains('grow'))return;t.style.height='auto';t.style.height=t.scrollHeight+2+'px'}
 function growAll(){if(!FS)document.querySelectorAll('textarea.grow').forEach(grow)}
 document.addEventListener('input',e=>grow(e.target));
-function modal(h){
+function modal(h,cls){
  const m=$('#modal'),was=(m.innerHTML||'').length>0;
- window._mt=Date.now();m.innerHTML=`<div class="ov ${was?'still':''}" onclick="if(event.target===this&&Date.now()-window._mt>450)closeModal()"><div class="sheet">${h}</div></div>`;growAll();
+ window._mt=Date.now();m.innerHTML=`<div class="ov ${was?'still':''}" onclick="if(event.target===this&&Date.now()-window._mt>450)closeModal()"><div class="sheet ${cls||''}">${h}</div></div>`;growAll();
  try{const f=$('#modal input:not([type]),#modal input[type=text]');if(f&&f.focus&&window.matchMedia&&window.matchMedia('(pointer:fine)').matches)f.focus()}catch(e){}
 }
 function closeModal(){$('#modal').innerHTML=''}
@@ -494,7 +503,7 @@ function vHeute(){
 
 /* ---------- Klassen ---------- */
 function matchS(s,q){
- const k=kl(s.klasse)||{name:'',fach:''},hay=[s.vn,s.nn,s.nn+', '+s.vn,s.vn+' '+s.nn,k.name,k.fach,s.tel,s.adr,s.eltern].join(' ').toLowerCase();
+ const k=kl(s.klasse)||{name:'',fach:''},hay=[s.vn,s.nn,s.nn+', '+s.vn,s.vn+' '+s.nn,k.name,k.fach,s.tel,s.adr,s.eltern,s.mail||''].join(' ').toLowerCase();
  return q.toLowerCase().split(/\s+/).filter(Boolean).every(w=>hay.includes(w));
 }
 function sListe(){
@@ -562,7 +571,7 @@ function vKlassen(){
  if(V.schueler&&sc(V.schueler))return vSchueler(sc(V.schueler));
  if(V.klasse&&kl(V.klasse))return vKlasse(kl(V.klasse));
  const t=iso(new Date());
- let h=`<div class="ph"><div><h1>Klassen</h1><div class="sub">${S.klassen.length} Klassen und Fächer</div></div><div class="acts"><button class="pri" onclick="klasseModal()">+ Neue Klasse</button></div></div><div class="cards">`;
+ let h=`<div class="ph"><div><h1>Klassen</h1><div class="sub">${S.klassen.length} Klassen und Fächer</div></div><div class="acts"><button class="pri" onclick="klasseModal()">+ Neue Klasse</button><button onclick="importModal()">Aus Datei importieren</button></div></div><div class="cards">`;
  S.klassen.forEach(k=>{
   const ss=S.schueler.filter(s=>s.klasse===k.id),g=avg(ss.map(s=>stats(s).g).filter(x=>x!=null)),kr=ss.filter(s=>s.krank.includes(t)).length;
   h+=`<div class="card click" onclick="go({klasse:'${k.id}',ktab:'schueler'})"><div class="head"><div class="av" style="font-size:17px">${esc(k.name)}</div><div><b style="font-size:17px">${esc(k.fach)}</b><div class="sub">${ss.length} Schüler${kr?' · '+kr+' krank':''}</div></div></div><div class="row" style="margin-top:14px"><span class="sub">Schriftlich Ø</span><b>${num(avg(ss.map(s=>stats(s).a).filter(x=>x!=null)))}</b></div><div class="row"><span class="sub">Mündlich Ø</span><b>${num(avg(ss.map(s=>stats(s).b).filter(x=>x!=null)))}</b></div><div class="row"><span class="sub">Zeugnisnote Ø</span><b>${num(g)}</b></div><div class="acts" style="margin-top:12px"><button onclick="event.stopPropagation();klasseModal('${k.id}')">Bearbeiten</button><button class="dng" onclick="event.stopPropagation();delKlasse('${k.id}')">Löschen</button></div></div>`;
@@ -572,7 +581,7 @@ function vKlassen(){
 function vKlasse(k){
  const t=iso(new Date()),ss=klasseStudents(k.id);
  let h=`<div class="ph"><div><button class="crumb" onclick="go({klasse:null})">‹ Alle Klassen</button><h1>${esc(k.name)} <span class="sub">${esc(k.fach)}</span></h1></div>
- <div class="acts">${V.ktab==='sitz'?`<button onclick="addDesk('${k.id}')">+ Tisch</button><button onclick="autoDesks('${k.id}')">Automatisch anordnen</button><button class="dng" onclick="deskClear('${k.id}')">Sitzplan leeren</button>`:`<button class="pri" onclick="schuelerModal('${k.id}')">+ Schüler</button><button onclick="transferModal('${k.id}')">Schüler kopieren oder verschieben</button>`}<button onclick="klasseModal('${k.id}')">Bearbeiten</button><button onclick="kopieModal('${k.id}')">Klasse kopieren</button><button class="dng" onclick="delKlasse('${k.id}')">Löschen</button></div></div>
+ <div class="acts">${V.ktab==='sitz'?`<button onclick="addDesk('${k.id}')">+ Tisch</button><button onclick="autoDesks('${k.id}')">Automatisch anordnen</button><button class="dng" onclick="deskClear('${k.id}')">Sitzplan leeren</button>`:`<button class="pri" onclick="schuelerModal('${k.id}')">+ Schüler</button><button onclick="importModal('${k.id}')">Aus Datei importieren</button><button onclick="transferModal('${k.id}')">Schüler kopieren oder verschieben</button>`}<button onclick="klasseModal('${k.id}')">Bearbeiten</button><button onclick="kopieModal('${k.id}')">Klasse kopieren</button><button class="dng" onclick="delKlasse('${k.id}')">Löschen</button></div></div>
  <div class="seg"><button class="${V.ktab==='schueler'?'on':''}" onclick="go({ktab:'schueler'})">Schüler</button><button class="${V.ktab==='sitz'?'on':''}" onclick="go({ktab:'sitz'})">Sitzplan</button></div>`;
  if(V.ktab==='sitz'){
   const desks=S.sitz[k.id]||[];
@@ -636,20 +645,251 @@ function delKlasse(id){ask('Klasse mit allen Schülern löschen?',()=>{
  Object.keys(S.plan).forEach(k=>{if(S.plan[k]===id)delete S.plan[k]});
  S.auftraege.forEach(a=>{a.klassen=a.klassen.filter(x=>x!==id)});save();go({klasse:null})})}
 function schuelerModal(kid,id){
- const s=id?sc(id):{vn:'',nn:'',tel:'',adr:'',eltern:'',klasse:kid};
+ const s=id?sc(id):{vn:'',nn:'',tel:'',adr:'',eltern:'',geb:'',mail:'',klasse:kid};
  modal(`<h2>${id?'Schüler bearbeiten':'Neuer Schüler'}</h2><div class="two"><label>Vorname<input id="m_vn" value="${esc(s.vn)}"></label><label>Nachname<input id="m_nn" value="${esc(s.nn)}"></label></div>
- <label>Telefon<input id="m_tel" value="${esc(s.tel)}"></label><label>Adresse<textarea class="grow" rows="1" id="m_adr">${esc(s.adr)}</textarea></label><label>Eltern, Kontakt<textarea class="grow" rows="1" id="m_el">${esc(s.eltern)}</textarea></label>
+ <div class="two"><label>Geburtsdatum<input id="m_geb" placeholder="TT.MM.JJJJ" value="${esc(s.geb)}"></label><label>Telefon<input id="m_tel" value="${esc(s.tel)}"></label></div><label>E-Mail<input type="email" id="m_mail" value="${esc(s.mail)}"></label><label>Adresse<textarea class="grow" rows="1" id="m_adr">${esc(s.adr)}</textarea></label><label>Eltern, Kontakt<textarea class="grow" rows="1" id="m_el">${esc(s.eltern)}</textarea></label>
  ${id?`<label>Klasse<select id="m_k">${S.klassen.map(k=>`<option value="${k.id}" ${k.id===s.klasse?'selected':''}>${esc(k.name)} · ${esc(k.fach)}</option>`).join('')}</select></label>`:''}
  <div class="btns"><button onclick="closeModal()">Abbrechen</button><button class="pri" onclick="schuelerSave('${kid}','${id||''}')">Speichern</button></div>`);
 }
 function schuelerSave(kid,id){
  const vn=$('#m_vn').value.trim(),nn=$('#m_nn').value.trim();if(!vn&&!nn)return info('Bitte einen Namen eingeben.');
  if(id){
-  const s=sc(id);Object.assign(s,{vn:vn,nn:nn,tel:$('#m_tel').value,adr:$('#m_adr').value,eltern:$('#m_el').value});
+  const s=sc(id);Object.assign(s,{vn:vn,nn:nn,tel:$('#m_tel').value,adr:$('#m_adr').value,eltern:$('#m_el').value,geb:$('#m_geb').value,mail:$('#m_mail').value});
   const to=$('#m_k').value;
   if(to!==s.klasse){S.sitz[s.klasse]=(S.sitz[s.klasse]||[]).filter(d=>d.sid!==id);s.klasse=to;addDeskFor(to,id);if(V.schueler===id)V.klasse=to}
- }else S.schueler.push({id:uid(),klasse:kid,vn:vn,nn:nn,tel:$('#m_tel').value,adr:$('#m_adr').value,eltern:$('#m_el').value,ziel:'',stand:'',vereinb:[],noten:[],krank:[],unent:[],notizen:[],zeugnis:''});
+ }else S.schueler.push({id:uid(),klasse:kid,vn:vn,nn:nn,tel:$('#m_tel').value,adr:$('#m_adr').value,eltern:$('#m_el').value,geb:$('#m_geb').value,mail:$('#m_mail').value,ziel:'',stand:'',vereinb:[],noten:[],krank:[],unent:[],notizen:[],zeugnis:''});
  save();closeModal();render();
+}
+
+/* ---------- Import: Klasse aus PDF, Scan, Foto, Excel, CSV oder Text ---------- */
+const LIB={pdf:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',pdfw:'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+ xlsx:'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js',ocr:'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'};
+const _js={};
+function loadJS(u){return _js[u]=_js[u]||new Promise((res,rej)=>{const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=()=>{delete _js[u];rej(new Error('Bibliothek konnte nicht geladen werden. Bitte mit dem Internet verbinden.'))};document.head.appendChild(s)})}
+const IMF=[['','ignorieren'],['nn','Nachname'],['vn','Vorname'],['name','Name (Nach- und Vorname)'],['klasse','Klasse'],['geb','Geburtsdatum'],['tel','Telefon'],['mail','E-Mail'],['str','Straße'],['plz','PLZ'],['ort','Ort'],['plzort','PLZ und Ort'],['adr','Adresse komplett'],['eltern','Eltern, Kontakt']];
+const IMC=[['nn','Nachname'],['vn','Vorname'],['klasse','Klasse'],['geb','Geburtsdatum'],['tel','Telefon'],['mail','E-Mail'],['adr','Adresse'],['eltern','Eltern, Kontakt']];
+/* Reihenfolge zählt: „Telefon Mutter“ ist Telefon, „E-Mail Eltern“ ist E-Mail */
+const IMH=[['',/^(nr\.?|lfd\.?( nr\.?)?|#|pos\.?|geschlecht|m\/w|konf|religion|staat|nation|bemerk)/],['mail',/mail/],['tel',/tel|fon|handy|mobil|notfall|phone/],['geb',/geb|geburt/],['plzort',/plz.*ort/],['plz',/^plz|postleitzahl/],['ort',/^(wohn)?ort\b|^stadt|^wohnort/],['str',/stra(ss|ß)e|^str\.?$|hausnummer/],['adr',/anschrift|adresse/],['klasse',/^klasse|^kl\.?$|^lerngruppe|^kurs/],['vn',/vorname|rufname/],['nn',/nachname|familienname|zuname/],['name',/^(name|schüler(in|innen)?|schülername|name des schülers)\b/],['eltern',/eltern|erziehungs|sorgeber|mutter|vater|kontakt|ansprechp/]];
+const RX={date:/^\d{1,2}\.\s?\d{1,2}\.\s?(\d{2}|\d{4})$/,mail:/^\S+@\S+\.\S+$/,tel:/^(\+|0|\()[\d\s\/()\-.]{5,}$/,plz:/^\d{5}$/,plzort:/^\d{5}\s+\D/,str:/\D{3,}\s*\d+\s*[a-z]?(\s*[-\/]\s*\d+[a-z]?)?$/i,
+ klasse:/^(\d{1,2}\s?[a-z]{0,2}|ef|q1|q2|e1|e2)$/i,name:/^[A-ZÄÖÜÉ][\p{L}'\-]+(\s+[\p{L}'\-]+)*$/u,junk:/seite\s*\d|^\s*(klassenliste|schülerliste|schuljahr|stand\b|gedruckt|druckdatum|summe|anzahl|gesamt|unterschrift)/i};
+let IM=null;
+function importModal(kid){
+ IM={kid:kid||null};
+ modal(`<h2>Klasse importieren</h2>
+ <div class="sub">PDF, Scan, Foto einer Liste, Excel, ODS, CSV oder Text. Die Datei bleibt auf diesem Gerät und wird nirgends hochgeladen. Beim ersten Mal lädt die App die Lesehilfen aus dem Internet.</div>
+ <label>Datei wählen<input type="file" id="im_f" accept=".pdf,.csv,.txt,.tsv,.xlsx,.xls,.ods,image/*,application/pdf"></label>
+ <label>oder Liste einfügen<textarea class="grow" id="im_t" placeholder="Eine Zeile pro Schüler, z. B. Müller; Anna; 8c"></textarea></label>
+ <label class="chk"><input type="checkbox" id="im_o"> Texterkennung erzwingen (für eingescannte PDFs)</label>
+ <div class="sub" id="im_s"></div>
+ <div class="btns"><button onclick="closeModal()">Abbrechen</button><button class="pri" onclick="imRead()">Einlesen</button></div>`);
+}
+const imStat=t=>{const e=$('#im_s');if(e)e.textContent=t};
+async function imRead(){
+ const f=$('#im_f').files[0],txt=$('#im_t').value,ocr=$('#im_o').checked;
+ if(!f&&!txt.trim())return imStat('Bitte eine Datei wählen oder eine Liste einfügen.');
+ try{
+  let src;
+  if(!f)src={lines:textLines(txt)};
+  else{
+   const n=f.name.toLowerCase();IM.file=f.name;
+   if(n.endsWith('.pdf')||f.type==='application/pdf')src=await readPdf(f,ocr);
+   else if(f.type.startsWith('image/')||/\.(jpe?g|png|heic|heif|webp|gif|bmp|tiff?)$/.test(n))src={lines:wordsToLines(await ocrImages([f]))};
+   else if(/\.(xlsx|xls|ods)$/.test(n))src=await readSheet(f);
+   else src={lines:textLines(await readText(f))};
+  }
+  imBuild(src);
+ }catch(e){imStat('Fehler: '+(e&&e.message||e))}
+}
+async function readText(f){const b=await f.arrayBuffer();try{return new TextDecoder('utf-8',{fatal:true}).decode(b)}catch(e){return new TextDecoder('windows-1252').decode(b)}}
+function textLines(t){
+ const ls=t.replace(/\r/g,'').split('\n').filter(l=>l.trim());
+ const d=[';','\t','|',','].map(c=>[c,ls.slice(0,20).filter(l=>l.includes(c)).length]).sort((a,b)=>b[1]-a[1])[0];
+ const delim=d[1]>=Math.max(1,ls.slice(0,20).length*0.6)?d[0]:null;
+ return ls.map(l=>({cells:delim?csvSplit(l,delim):l.trim().split(/\t|\s{2,}/)}));
+}
+function csvSplit(l,d){const out=[];let c='',q=false;for(let i=0;i<l.length;i++){const ch=l[i];if(q){if(ch==='"'&&l[i+1]==='"'){c+='"';i++}else if(ch==='"')q=false;else c+=ch}else if(ch==='"')q=true;else if(ch===d){out.push(c);c=''}else c+=ch}out.push(c);return out.map(x=>x.trim())}
+async function readSheet(f){
+ imStat('Tabelle wird gelesen …');await loadJS(LIB.xlsx);
+ const wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:false}),lines=[];
+ wb.SheetNames.forEach(sn=>{XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,raw:false,defval:''}).forEach(r=>{if(r.some(c=>String(c).trim()))lines.push({cells:r.map(c=>String(c).trim()),hint:wb.SheetNames.length>1?sn:null})})});
+ return {lines:lines};
+}
+async function readPdf(f,force){
+ imStat('PDF wird gelesen …');await loadJS(LIB.pdf);
+ pdfjsLib.GlobalWorkerOptions.workerSrc=LIB.pdfw;
+ const doc=await pdfjsLib.getDocument({data:new Uint8Array(await f.arrayBuffer())}).promise,words=[];let chars=0;
+ for(let p=1;p<=doc.numPages;p++){
+  const tc=await (await doc.getPage(p)).getTextContent();
+  tc.items.forEach(it=>{const s=it.str.trim();if(!s)return;chars+=s.length;const tr=it.transform,h=it.height||Math.hypot(tr[2],tr[3])||10;
+   words.push({t:s,x0:tr[4],x1:tr[4]+(it.width||s.length*h*0.5),y:p*1e5-tr[5],h:h})});
+ }
+ if(!force&&chars>=15*doc.numPages)return {lines:wordsToLines(words,0.45)};
+ const pages=[];
+ for(let p=1;p<=doc.numPages;p++){imStat(`Seite ${p} von ${doc.numPages} wird für die Texterkennung vorbereitet …`);
+  const pg=await doc.getPage(p),vp=pg.getViewport({scale:2.5}),c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;
+  await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;pages.push(c)}
+ return {lines:wordsToLines(await ocrImages(pages))};
+}
+async function ocrImages(imgs){
+ imStat('Texterkennung wird geladen …');await loadJS(LIB.ocr);
+ let cur=0;
+ const w=await Tesseract.createWorker('deu',1,{logger:m=>{if(m.status==='recognizing text')imStat(`Texterkennung${imgs.length>1?' Seite '+(cur+1)+' von '+imgs.length:''}: ${Math.round(m.progress*100)} %`);else if(m.status)imStat('Texterkennung: '+m.status+' …')}});
+ const words=[];
+ try{for(cur=0;cur<imgs.length;cur++){const r=await w.recognize(imgs[cur]);(r.data.words||[]).forEach(x=>{if(x.confidence<25||!x.text.trim())return;const b=x.bbox;words.push({t:x.text.trim(),x0:b.x0,x1:b.x1,y:cur*1e5+(b.y0+b.y1)/2,h:b.y1-b.y0})})}}
+ finally{await w.terminate()}
+ return words;
+}
+/* Wörter mit Position → Zeilen → Zellen (Lücke breiter als gap × Zeichenhöhe trennt Spalten) */
+function wordsToLines(ws,gap){
+ gap=gap||0.9;
+ ws=ws.slice().sort((a,b)=>a.y-b.y||a.x0-b.x0);const lines=[];
+ ws.forEach(w=>{const l=lines[lines.length-1];if(l&&Math.abs(w.y-l.y)<Math.max(3,0.55*Math.min(w.h,l.h)))l.ws.push(w);else lines.push({y:w.y,h:w.h,ws:[w]})});
+ return lines.map(l=>{l.ws.sort((a,b)=>a.x0-b.x0);const cells=[];let c=null;
+  l.ws.forEach(w=>{if(c&&w.x0-c.x1<gap*l.h){c.t+=' '+w.t;c.x1=w.x1}else{c={t:w.t,x0:w.x0,x1:w.x1};cells.push(c)}});
+  return {cells:cells.map(c=>c.t),pos:cells,ws:l.ws,h:l.h}});
+}
+const imNorm=s=>String(s||'').toLowerCase().replace(/[.:]/g,'').trim();
+function headField(c){const t=imNorm(c);if(!t||t.length>40)return null;for(const [f,r] of IMH)if(r.test(t))return f;return null}
+function imBuild(src){
+ const lines=src.lines.filter(l=>l.cells.some(c=>c.trim()));
+ if(!lines.length)return imStat('In der Datei wurde kein Text gefunden. Bei Scans hilft „Texterkennung erzwingen“.');
+ /* Klassenname aus Überschrift oder Dateiname */
+ let hint=null;
+ for(const l of lines.slice(0,15)){const m=l.cells.join(' ').match(/klasse\s*:?\s*(\d{1,2}\s?[a-z]{0,2}|ef|q1|q2)\b/i);if(m){hint=m[1].replace(/\s/g,'');break}}
+ if(!hint&&IM.file){const m=IM.file.match(/(?:^|[^\d])(\d{1,2}[a-z]{1,2}|ef|q1|q2)(?:[^a-z]|$)/i);if(m)hint=m[1]}
+ /* Kopfzeile: erste Zeile mit mindestens zwei erkannten Spalten */
+ let hi=lines.findIndex(l=>l.cells.filter(c=>headField(c)!=null&&headField(c)!=='').length>=2);
+ let rows,map;
+ if(hi>=0){
+  let H=lines[hi];
+  /* mehrzeilige Kopfzeile, z. B. „Geb.-“ darüber und „Datum“ darunter */
+  if(H.pos){
+   const pos=H.pos.map(c=>Object.assign({},c)),part=l=>l&&l.pos&&l.cells.length<H.cells.length/2&&!/\d/.test(l.cells.join(''))&&Math.abs(l.ws[0].y-H.ws[0].y)<2*H.h;
+   const merge=(l,above)=>l.pos.forEach(c=>{const o=pos.find(p=>c.x0<p.x1&&c.x1>p.x0);if(o)o.t=above?c.t+' '+o.t:o.t+' '+c.t;else pos.push(Object.assign({},c))});
+   const up=part(lines[hi-1]),dn=part(lines[hi+1]);
+   if(dn){merge(lines[hi+1],false);lines.splice(hi+1,1)}
+   if(up){merge(lines[hi-1],true);lines.splice(hi-1,1);hi--}
+   pos.sort((a,b)=>a.x0-b.x0);H={cells:pos.map(c=>c.t),pos:pos,ws:H.ws,h:H.h};
+  }
+  map=H.cells.map(headField).map(f=>f||'');
+  if(map.includes('name')&&map.includes('vn'))map=map.map(f=>f==='name'?'nn':f);
+  rows=lines.slice(hi+1).filter(l=>l.cells.join('|')!==H.cells.join('|')&&!(l.cells.filter(c=>headField(c)).length>=2)).map(l=>({cells:H.pos&&l.ws?alignTo(H.pos,l.ws,l.h):pad(l.cells,H.cells.length),hint:l.hint,y:l.ws?l.ws[0].y:null,h:l.h}));
+  IM.head=H.cells;
+ }else{
+  const n=Math.max(...lines.map(l=>l.cells.length));
+  rows=lines.map(l=>({cells:pad(l.cells,n),hint:l.hint}));map=guessMap(rows,n);IM.head=null;
+ }
+ IM.rows=rows;IM.map=map;IM.hint=hint;
+ imRecs();imPreview();
+}
+const pad=(a,n)=>a.concat(Array(Math.max(0,n-a.length)).fill(''));
+function alignTo(hp,ws,h){
+ const b=hp.slice(1).map(c=>c.x0-0.6*h),out=hp.map(()=>[]);
+ ws.forEach(w=>{let i=0;while(i<b.length&&w.x0>=b[i])i++;out[i].push(w.t)});
+ return out.map(x=>x.join(' '));
+}
+function guessMap(rows,n){
+ const map=[],used={};
+ for(let i=0;i<n;i++){
+  const v=rows.map(r=>(r.cells[i]||'').trim()).filter(Boolean);
+  const fr=rx=>v.length?v.filter(x=>rx.test(x)).length/v.length:0;
+  let f='';
+  if(!v.length)f='';
+  else if(v.every((x,j)=>/^\d+\.?$/.test(x))&&v.map(x=>parseInt(x)).every((x,j,a)=>!j||x===a[j-1]+1))f='';
+  else if(fr(RX.mail)>0.5)f='mail';
+  else if(fr(RX.date)>0.5)f='geb';
+  else if(fr(RX.plzort)>0.5)f='plzort';
+  else if(fr(RX.plz)>0.5)f='plz';
+  else if(fr(RX.tel)>0.5)f='tel';
+  else if(fr(RX.str)>0.5)f='str';
+  else if(fr(RX.klasse)>0.6)f='klasse';
+  else if(v.filter(x=>/^[mwd]$/i.test(x)).length/v.length>0.6)f='';
+  else if(v.filter(x=>x.includes(',')&&RX.name.test(x.replace(',',''))).length/v.length>0.5)f='name';
+  else if(fr(RX.name)>0.5){f=!used.nn&&!used.name?'nn':!used.vn&&!used.name?'vn':used.ort||used.plzort?'eltern':'ort'}
+  if(f&&f!=='tel'&&f!=='eltern'&&used[f])f='';
+  if(f)used[f]=1;map.push(f);
+ }
+ /* nur eine Namensspalte ohne Komma: als Name (Nach- und Vorname) lesen */
+ if(used.nn&&!used.vn)map[map.indexOf('nn')]='name';
+ return map;
+}
+const tCase=s=>s.replace(/^[^\p{L}]+|[^\p{L}.]+$/gu,'').replace(/[\p{Lu}]{2,}/gu,w=>w[0]+w.slice(1).toLowerCase());
+function splitName(s){
+ s=tCase(s.trim().replace(/\s+/g,' '));
+ if(s.includes(','))return {nn:s.split(',')[0].trim(),vn:s.split(',').slice(1).join(',').trim()};
+ const p=s.split(' ');if(p.length<2)return {nn:s,vn:''};
+ return {nn:p[0],vn:p.slice(1).join(' ')};
+}
+function imRecs(){
+ const recs=[],orph=[],m=IM.map;
+ IM.rows.forEach(r=>{
+  const o={},add=(k,v,sep)=>{v=(v||'').trim();if(v)o[k]=o[k]?o[k]+(sep||', ')+v:v};
+  m.forEach((f,i)=>{const v=(r.cells[i]||'').trim();if(!f||!v)return;
+   if(f==='name')Object.assign(o,splitName(v));else if(f==='tel')add('tel',v,' / ');else add(f,f==='nn'||f==='vn'?tCase(v):v,f==='nn'||f==='vn'?' ':', ')});
+  const has=o.nn||o.vn,joined=r.cells.join(' ');
+  if(!has){/* Fortsetzungszeile, z. B. umbrochene Adresse; gehört zur nächstgelegenen Schülerzeile */
+   if(Object.keys(o).length&&!RX.junk.test(joined))orph.push({o:o,y:r.y,after:recs.length});return}
+  if(RX.junk.test(joined)||/\d/.test((o.nn||'')+(o.vn||'')))return;
+  o.klasse=(o.klasse||r.hint||IM.hint||'').replace(/\s/g,'');
+  o._y=r.y;o._h=r.h;recs.push(o);
+ });
+ orph.forEach(x=>{
+  const a=recs[x.after-1],b=recs[x.after];let t=a,above=false;
+  if(b&&x.y!=null&&b._y!=null&&(!a||Math.abs(b._y-x.y)<Math.abs(x.y-a._y)))t=b,above=true;
+  if(!t)return;
+  Object.keys(x.o).forEach(k=>{const v=x.o[k],sep=k==='eltern'||(k==='adr'&&/^\d{5}\b/.test(above?t[k]||'':v))?', ':' ';t[k]=t[k]?(above?v+sep+t[k]:t[k]+sep+v):v});
+ });
+ /* Adresse erst nach dem Zusammenführen bauen */
+ recs.forEach(o=>{o.adr=[o.adr,o.str,[o.plz,o.ort].filter(Boolean).join(' ')||'',o.plzort].filter(Boolean).join(', ')});
+ IM.recs=recs.map(o=>{const r={on:true};IMC.forEach(([k])=>r[k]=o[k]||'');return r});
+ imDupes();
+}
+function imDupes(){IM.recs.forEach(r=>{const t=imTarget(r.klasse);r.dup=!!(t&&t.kid&&S.schueler.some(s=>s.klasse===t.kid&&s.nn.toLowerCase()===r.nn.toLowerCase()&&s.vn.toLowerCase()===r.vn.toLowerCase()));if(r.dup)r.on=false})}
+function imGroupNames(){return [...new Set(IM.recs.map(r=>r.klasse))]}
+function imTarget(g){
+ IM.tg=IM.tg||{};
+ if(!IM.tg[g]){const ex=IM.kid?kl(IM.kid):null;IM.tg[g]=ex?{kid:ex.id}:{kid:'',name:g||IM.hint||'',fach:S.set.faecher[0]||''}}
+ return IM.tg[g];
+}
+function imPreview(){
+ const n=IM.recs.length;
+ if(!n)return imStat('Keine Schüler erkannt. Über „Spalten zuordnen“ kannst du festlegen, welche Spalte was enthält.')||imMapView();
+ modal(`<h2>Import prüfen <span class="sub">${n} Schüler erkannt</span></h2>
+ <div class="sub">Felder antippen zum Korrigieren. Abgewählte Zeilen werden nicht übernommen.</div>
+ <div class="acts" style="margin:10px 0"><button onclick="imMapView()">Spalten zuordnen</button><button onclick="imSwap()">Vor- und Nachname tauschen</button><button onclick="IM.recs.forEach(r=>r.on=!r.dup);imPreview()">Alle wählen</button></div>
+ <div class="imt"><table><tr><th></th>${IMC.map(c=>`<th>${c[1]}</th>`).join('')}</tr>
+ ${IM.recs.map((r,i)=>`<tr class="${r.on?'':'off'}"><td><input type="checkbox" ${r.on?'checked':''} onchange="IM.recs[${i}].on=this.checked;this.closest('tr').className=this.checked?'':'off'">${r.dup?'<div class="tag warn">schon da</div>':''}</td>${IMC.map(([k])=>`<td><input value="${esc(r[k])}" oninput="IM.recs[${i}].${k}=this.value"${k==='klasse'?' onchange="imDupes();imGroups()"':''}></td>`).join('')}</tr>`).join('')}</table></div>
+ <h3>Klassen</h3><div id="im_g"></div>
+ <div class="btns"><button onclick="closeModal()">Abbrechen</button><button class="pri" onclick="imSave()">Anlegen</button></div>`,'wide');
+ imGroups();
+}
+function imGroups(){
+ const fl=S.set.faecher;
+ $('#im_g').innerHTML=imGroupNames().map(g=>{const t=imTarget(g),c=IM.recs.filter(r=>r.klasse===g&&r.on).length,ge=esc(JSON.stringify(g));
+  return `<div class="row" style="flex-wrap:wrap;justify-content:flex-start"><b style="min-width:90px">${g?esc(g):'ohne Klasse'}</b><span class="sub">${c} Schüler</span>
+  <select style="width:auto" onchange="imTarget(${ge}).kid=this.value;imDupes();imPreview()"><option value="">Neue Klasse anlegen</option>${S.klassen.map(k=>`<option value="${k.id}" ${t.kid===k.id?'selected':''}>In ${esc(k.name)} · ${esc(k.fach)}</option>`).join('')}</select>
+  ${t.kid?'':`<input style="width:110px" placeholder="Name" value="${esc(t.name)}" oninput="imTarget(${ge}).name=this.value"><select style="width:auto" onchange="imTarget(${ge}).fach=this.value">${fl.map(f=>`<option ${f===t.fach?'selected':''}>${esc(f)}</option>`).join('')}</select>`}</div>`}).join('');
+}
+function imSwap(){IM.recs.forEach(r=>{const x=r.nn;r.nn=r.vn;r.vn=x});imDupes();imPreview()}
+function imMapView(){
+ const n=Math.max(IM.map.length,...IM.rows.map(r=>r.cells.length));
+ modal(`<h2>Spalten zuordnen</h2><div class="sub">Lege für jede Spalte fest, was sie enthält. Darunter siehst du die ersten Zeilen aus der Datei.</div>
+ <div class="imt"><table><tr>${Array.from({length:n},(_,i)=>`<th><select onchange="IM.map[${i}]=this.value">${IMF.map(f=>`<option value="${f[0]}" ${(IM.map[i]||'')===f[0]?'selected':''}>${f[1]}</option>`).join('')}</select>${IM.head&&IM.head[i]?`<div class="sub">${esc(IM.head[i])}</div>`:''}</th>`).join('')}</tr>
+ ${IM.rows.slice(0,10).map(r=>`<tr>${Array.from({length:n},(_,i)=>`<td>${esc(r.cells[i]||'')}</td>`).join('')}</tr>`).join('')}</table></div>
+ <div class="btns"><button onclick="closeModal()">Abbrechen</button><button class="pri" onclick="IM.map=IM.map.concat(Array(Math.max(0,${n}-IM.map.length)).fill(''));IM.tg={};imRecs();imPreview()">Weiter</button></div>`,'wide');
+}
+function imSave(){
+ const recs=IM.recs.filter(r=>r.on&&(r.nn.trim()||r.vn.trim()));
+ if(!recs.length)return info('Keine Schüler ausgewählt.');
+ for(const g of imGroupNames()){const t=imTarget(g);if(!t.kid&&recs.some(r=>r.klasse===g)&&!t.name.trim())return info('Bitte für jede neue Klasse einen Namen eingeben.')}
+ const made={},touched=new Set();
+ recs.forEach(r=>{const t=imTarget(r.klasse);let kid=t.kid;
+  if(!kid){kid=made[r.klasse];if(!kid){kid=made[r.klasse]=uid();S.klassen.push({id:kid,name:t.name.trim(),fach:t.fach});S.sitz[kid]=[]}}
+  const s={id:uid(),klasse:kid,vn:r.vn.trim(),nn:r.nn.trim(),tel:r.tel.trim(),adr:r.adr.trim(),eltern:r.eltern.trim(),geb:r.geb.trim(),mail:r.mail.trim(),ziel:'',stand:'',vereinb:[],noten:[],krank:[],unent:[],notizen:[],zeugnis:''};
+  S.schueler.push(s);addDeskFor(kid,s.id);touched.add(kid)});
+ save();closeModal();const ks=[...touched];IM=null;
+ go(ks.length===1?{tab:'klassen',klasse:ks[0],ktab:'schueler',schueler:null}:{tab:'klassen',klasse:null,schueler:null});
+ info(recs.length+' Schüler in '+ks.length+(ks.length===1?' Klasse':' Klassen')+' angelegt.');
 }
 
 /* ---------- Schüler-Karteikarte ---------- */
@@ -665,7 +905,7 @@ function vSchueler(s){
  ${V.ntab==='uebersicht'?`<h3>Schriftlich</h3><div class="chips">${chips('s')}</div><h3>Mündlich</h3><div class="chips">${chips('m')}</div>`:notenListe(s)}</div>
  <div class="g2e"><div class="stack">
  <div class="card"><h2>Stammdaten</h2><div class="two"><label>Vorname<input value="${esc(s.vn)}" oninput="upd('${s.id}','vn',this.value)"></label><label>Nachname<input value="${esc(s.nn)}" oninput="upd('${s.id}','nn',this.value)"></label></div>
- <label>Telefon<input value="${esc(s.tel)}" oninput="upd('${s.id}','tel',this.value)"></label><label>Adresse<textarea class="grow" rows="1" oninput="upd('${s.id}','adr',this.value)">${esc(s.adr)}</textarea></label><label>Eltern, Kontakt<textarea class="grow" rows="1" oninput="upd('${s.id}','eltern',this.value)">${esc(s.eltern)}</textarea></label></div>
+ <div class="two"><label>Geburtsdatum<input value="${esc(s.geb)}" placeholder="TT.MM.JJJJ" oninput="upd('${s.id}','geb',this.value)"></label><label>Telefon<input value="${esc(s.tel)}" oninput="upd('${s.id}','tel',this.value)"></label></div><label>E-Mail<input type="email" value="${esc(s.mail)}" oninput="upd('${s.id}','mail',this.value)"></label><label>Adresse<textarea class="grow" rows="1" oninput="upd('${s.id}','adr',this.value)">${esc(s.adr)}</textarea></label><label>Eltern, Kontakt<textarea class="grow" rows="1" oninput="upd('${s.id}','eltern',this.value)">${esc(s.eltern)}</textarea></label></div>
  </div><div class="stack">
  <div class="card"><h2>Notizen und ToDos</h2>${notizenHtml(s)}</div>
  <div class="card"><h2>Lernziele dieses Schuljahr</h2><textarea class="grow" placeholder="Ziele aus der Reflexion" oninput="upd('${s.id}','ziel',this.value)">${esc(s.ziel)}</textarea></div>
