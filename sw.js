@@ -1,5 +1,5 @@
 // Offline-Cache. Bei Änderungen an index.html die Versionsnummer erhöhen.
-const V = 'lehrerdash-v15';
+const V = 'lehrerdash-v16';
 // Lesehilfen für den Import (PDF, Excel, Texterkennung) aus dem Netz, nach dem ersten Laden offline
 const LIBS = 'lehrerdash-libs';
 const LIBHOSTS = ['cdnjs.cloudflare.com', 'cdn.jsdelivr.net', 'tessdata.projectnaptha.com'];
@@ -8,7 +8,7 @@ self.addEventListener('install', e => {
   e.waitUntil(caches.open(V).then(c => Promise.all(FILES.map(f => c.add(new Request(f, { cache: 'reload' })).catch(() => {})))).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
-  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V && k !== LIBS).map(k => caches.delete(k)))).then(() => self.clients.claim()));
+  e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('lehrerdash-') && k !== V && k !== LIBS).map(k => caches.delete(k)))).then(() => self.clients.claim()));
 });
 // Erst Cache (schnell, offline), im Hintergrund aktualisieren.
 self.addEventListener('fetch', e => {
